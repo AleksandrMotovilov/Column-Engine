@@ -1,67 +1,108 @@
 #pragma once
 
 #include <cstddef>
-#include <variant>
+#include <fstream>
 #include <vector>
 #include <string>
 #include <memory>
+#include <sstream>
 #include <cstdint>
 
-using Value = std::variant<std::string, int64_t>;
+const size_t kColumnBatchSize = 2;
+const size_t kRowBatchSize = 2;
 
-enum Type {
-    INT64,
-    STRING
+enum Type : uint8_t {
+    Int16,
+    Int32,
+    Int64,
+    Int128,
+    Float,
+    Double,
+    Date,
+    Timestamp,
+    Char,
+    String,
 };
 
-class SchemaColumn {
-public:
-    SchemaColumn(std::string name, std::string type);
-    SchemaColumn(std::string name, Type type);
-    std::string GetString();
-    std::string GetName();
-    Type GetType();
+Type TypeFromString(std::string value);
+std::string StringFromType(Type value);
 
-private:
-    std::string name_;
-    Type type_;
-};
+template<typename T>
+T FromString(std::string str) {
+    std::stringstream ss;
+    ss << str;
+    T value;
+    ss >> value;
+    return value;
+}
 
-class Schema {
-public:
-    Schema();
-    void FromCSV(const std::string& file);
-    void FromCLMN(const std::string& file);
-    void Push(std::string name, Type type);
-    size_t ColumnsNumber();
-    std::string GetString();
-    std::string GetName(size_t ind);
-    Type GetType(size_t ind);
-
-private:
-    std::vector<SchemaColumn> columns_schema_;
-};
+template<typename T>
+std::string ToString(T value) {
+    std::stringstream ss;
+    ss << value;
+    std::string str;
+    str = ss.str();
+    return str;
+}
 
 class Column {
 public:
-    Column();
-    void Push(std::string value, Type type);
-    std::string GetValueString(size_t row);
-    size_t RowsNumber();
+    virtual ~Column() = default; 
+    virtual size_t GetSize() = 0;
+    ////// Можно ли сделать умнее, чем передавать через string? //////
+    virtual void SetValue(size_t index, std::string value) = 0;
+    virtual std::string GetValue(size_t index) = 0;
+};
+
+template<typename T>
+class ColumnTyped : public Column {
+public:
+    ColumnTyped(size_t size) {
+        column_ = std::vector<T>(size);
+    }
+    ~ColumnTyped() {
+    }
+    size_t GetSize() override {
+        return column_.size();
+    }
+    void SetValue(size_t index, std::string value) override {
+        column_[index] = FromString<T>(value);
+    }
+    std::string GetValue(size_t index) override {
+        return ToString<T>(column_[index]);
+    }
 
 private:
-    std::vector<Value> column_;
+    std::vector<T> column_;
+};
+
+class Batch {
+public:
+    Batch(size_t rows_number, std::vector<Type> types, std::vector<std::string> names);
+    size_t GetSize();
+    std::vector<Type> GetTypes();
+    std::vector<std::string> GetNames();
+    void SetValue(size_t row_index, size_t column_index, std::string value);
+    std::string GetValue(size_t index_row, size_t index_column);
+
+private:
+    std::vector<std::unique_ptr<Column>> columns_;
+    std::vector<std::string> names_;
+    std::vector<Type> types_;
 };
 
 class Table {
 public:
-    Table(std::shared_ptr<Schema> schema);
-    void Push(size_t col, std::string value, Type type);
-    std::string GetValueString(size_t row, size_t col);
-    size_t RowsNumber();
-    size_t ColumnsNumber();
+    Table(const std::string& file_input, const std::string& file_output);
+    ~Table();
+    void ReadBatch();
+    void WriteBatch();
 
 private:
-    std::vector<Column> columns_data_;
-    std::shared_ptr<Schema> schema_;
+    std::ifstream fin_;
+    std::ofstream fout_;
+    size_t rows_number_;
+    size_t columns_number_;
+    size_t column_batch_index_;
+    std::unique_ptr<Batch> batch_;
 };

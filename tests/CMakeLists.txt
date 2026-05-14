@@ -1,14 +1,5 @@
-add_executable(test_schema test_schema.cpp)
-add_executable(test_from_csv_to_clmn test_from_csv_to_clmn.cpp)
-add_executable(test_from_clmn_to_csv test_from_clmn_to_csv.cpp)
 add_executable(test_convertion test_convertion.cpp)
 
-target_link_libraries(test_schema converter_from_csv_to_clmn converter_from_clmn_to_csv GTest::gtest_main)
-target_link_libraries(test_from_csv_to_clmn converter_from_csv_to_clmn GTest::gtest_main)
-target_link_libraries(test_from_clmn_to_csv converter_from_clmn_to_csv GTest::gtest_main)
 target_link_libraries(test_convertion converter_from_csv_to_clmn converter_from_clmn_to_csv GTest::gtest_main)
 
-target_include_directories(test_schema PUBLIC ${CMAKE_SOURCE_DIR}/src)
-target_include_directories(test_from_csv_to_clmn PUBLIC ${CMAKE_SOURCE_DIR}/src)
-target_include_directories(test_from_clmn_to_csv PUBLIC ${CMAKE_SOURCE_DIR}/src)
 target_include_directories(test_convertion PUBLIC ${CMAKE_SOURCE_DIR}/src)
