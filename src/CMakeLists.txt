@@ -1,2 +1,2 @@
-add_library(converter_from_csv_to_clmn from_csv_to_clmn.cpp  objects.cpp)
+add_library(converter_from_csv_to_clmn from_csv_to_clmn.cpp objects.cpp)
 add_library(converter_from_clmn_to_csv from_clmn_to_csv.cpp objects.cpp)

@@ -1,187 +1,289 @@
 #include "objects.h"
-#include <stdexcept>
-#include <fstream>
-#include <sstream>
-#include <string>
 
-//----------------------SchemaColumn----------------------
-SchemaColumn::SchemaColumn(std::string name, std::string type) {
-    name_ = name;
-    if (type == "int64") {
-        type_ = Type::INT64;
-    } else if (type == "string") {
-        type_ = Type::STRING;
+Type TypeFromString(std::string value) {
+    if (value == "int16") {
+        return Type::Int16;
+    } else if (value == "int32") {
+        return Type::Int32;
+    } else if (value == "int64") {
+        return Type::Int64;
+    } else if (value == "int128") {
+        return Type::Int128;
+    } else if (value == "float") {
+        return Type::Float;
+    } else if (value == "double") {
+        return Type::Double;
+    } else if (value == "date") {
+        return Type::Date;
+    } else if (value == "timestamp") {
+        return Type::Timestamp;
+    } else if (value == "char") {
+        return Type::Char;
+    } else if (value == "string") {
+        return Type::String;
     } else {
-        throw std::runtime_error("Invalid type: SchemaColumn::SchemaColumn");
+        throw std::runtime_error("Invalid type :: TypeFromString");
     }
 }
-SchemaColumn::SchemaColumn(std::string name, Type type) {
-    name_ = name;
-    type_ = type;
-}
-std::string SchemaColumn::GetString() {
-    switch (type_) {
-        case Type::INT64:
-            return name_ + ",int64";
-        case Type::STRING:
-            return name_ + ",string";
-        default:
-            throw std::runtime_error("Invalid type: SchemaColumn::GetString");
+std::string StringFromType(Type value) {
+    if (value == Type::Int16) {
+        return "int16";
+    } else if (value == Type::Int32) {
+        return "int32";
+    } else if (value == Type::Int64) {
+        return "int64";
+    } else if (value == Type::Int128) {
+        return "int128";
+    } else if (value == Type::Float) {
+        return "float";
+    } else if (value == Type::Double) {
+        return "double";
+    } else if (value == Type::Date) {
+        return "date";
+    } else if (value == Type::Timestamp) {
+        return "timestamp";
+    } else if (value == Type::Char) {
+        return "char";
+    } else if (value == Type::String) {
+        return "string";
+    } else {
+        throw std::runtime_error("Invalid type :: StringFromType");
     }
-}
-std::string SchemaColumn::GetName() {
-    return name_;
-}
-Type SchemaColumn::GetType() {
-    return type_;
 }
 
-//----------------------Schema----------------------
-Schema::Schema() {
-    columns_schema_ = std::vector<SchemaColumn>();
-}
-void Schema::FromCSV(const std::string& file) {
-    std::ifstream fin(file);
-    if (!fin.is_open()) {
-        throw std::runtime_error("Cannot open file {" + file + "}: Schema::FromCSV");
-    }
-    std::string line;
-    while (std::getline(fin, line, '\n')) {
-        std::stringstream ss;
-        ss << line;
-        std::string name;
-        std::getline(ss, name, ',');
-        std::string type;
-        std::getline(ss, type, ',');
-        std::string remaining;
-        if (std::getline(ss, remaining, '\n')) {
-            if (remaining != "") {
-                throw std::runtime_error("Invalid schema format at line {ends on " + remaining + "}: Schema::FromCSV");
-            }
+Batch::Batch(size_t rows_number, std::vector<Type> types, std::vector<std::string> names) {
+    names_ = names;
+    types_ = types;
+    for (size_t i = 0; i < types.size(); i++) {
+        switch (types[i]) {
+            case Type::Int16:
+                columns_.push_back(std::make_unique<ColumnTyped<int16_t>>(rows_number));
+                break;
+            case Type::Int32:
+                columns_.push_back(std::make_unique<ColumnTyped<int32_t>>(rows_number));
+                break;
+            case Type::Int64:
+                columns_.push_back(std::make_unique<ColumnTyped<int64_t>>(rows_number));
+                break;
+            case Type::Int128:
+                // TODO ??????????????????????????????????????????????????????????????????????????????????????????
+                break;
+            case Type::Float:
+                columns_.push_back(std::make_unique<ColumnTyped<float>>(rows_number));
+                break;
+            case Type::Double:
+                columns_.push_back(std::make_unique<ColumnTyped<double>>(rows_number));
+                break;
+            case Type::Date:
+                // TODO ??????????????????????????????????????????????????????????????????????????????????????????
+                break;
+            case Type::Timestamp:
+                // TODO ??????????????????????????????????????????????????????????????????????????????????????????
+                break;
+            case Type::Char:
+                columns_.push_back(std::make_unique<ColumnTyped<char>>(rows_number));
+                break;
+            case Type::String:
+                columns_.push_back(std::make_unique<ColumnTyped<std::string>>(rows_number));
+                break;
+            default:
+                throw std::runtime_error("Invalid type");
         }
-        columns_schema_.emplace_back(name, type);
     }
-    fin.close();
 }
-void Schema::FromCLMN(const std::string& file) {
-    std::ifstream fin(file);
-    if (!fin.is_open()) {
-        throw std::runtime_error("Cannot open file {" + file + "}: Schema::FromCLMN");
+size_t Batch::GetSize() {
+    return columns_.size();
+}
+std::vector<Type> Batch::GetTypes() {
+    return types_;
+}
+std::vector<std::string> Batch::GetNames() {
+    return names_;
+}
+void Batch::SetValue(size_t row_index, size_t column_index, std::string value) {
+    if (columns_[column_index] == nullptr) {
+        throw std::runtime_error("Error");
     }
-    int64_t offset;
-    fin.seekg(-sizeof(offset), std::ios::end);
-    fin.read(reinterpret_cast<char*>(&offset), sizeof(offset));
-    fin.seekg(0, std::ios::end);
-    std::streampos fin_end = fin.tellg();
-    std::streampos schema_end = fin_end - static_cast<std::streampos>(sizeof(offset));
-    fin.seekg(-offset, std::ios::end);
-    std::string line;
-    std::streampos pos = fin.tellg();
-    while (pos < schema_end && std::getline(fin, line, '\n')) {
-        pos = fin.tellg();
-        std::stringstream ss;
-        ss << line;
-        std::string name;
-        std::getline(ss, name, ',');
-        std::string type;
-        std::getline(ss, type, ',');
-        std::string remaining;
-        if (std::getline(ss, remaining, '\n')) {
-            if (remaining != "") {
-                throw std::runtime_error("Invalid schema format at line: {ends on " + remaining + "}: Schema::FromCLMN");
+    columns_[column_index]->SetValue(row_index, value);
+}
+std::string Batch::GetValue(size_t index_column, size_t index_row) {
+    return columns_[index_column]->GetValue(index_row);
+}
+
+Table::Table(const std::string& file_input, const std::string& file_output) {
+    if (file_input == file_output) {
+        throw std::runtime_error("Error");
+    }
+    std::ifstream fin(file_input);
+    fin_ = std::move(fin);
+    if (!fin_.is_open()) {
+        throw std::runtime_error("Cannot open file {" + file_input + "}");
+    }
+    std::ofstream fout(file_output);
+    fout_ = std::move(fout);
+    if (!fout_.is_open()) {
+        throw std::runtime_error("Cannot open file {" + file_output + "}");
+    }
+    fin_.read(reinterpret_cast<char*>(&rows_number_), sizeof(size_t));
+    fin_.read(reinterpret_cast<char*>(&columns_number_), sizeof(size_t));
+    // Точно ли здесь так и если нент, то как надо?
+    fout_.write(reinterpret_cast<char*>(&rows_number_), sizeof(size_t));
+    fout_.write(reinterpret_cast<char*>(&columns_number_), sizeof(size_t));
+    column_batch_index_ = 0;
+    ReadBatch();
+}
+Table::~Table() {
+    fin_.close();
+    fout_.close();
+}
+void Table::ReadBatch() {
+    size_t column_batch_index_check;
+    size_t column_batch_size;
+    fin_.read(reinterpret_cast<char*>(&column_batch_index_check), sizeof(size_t));
+    fin_.read(reinterpret_cast<char*>(&column_batch_size), sizeof(size_t));
+
+    if (column_batch_index_ != column_batch_index_check) {
+        throw std::runtime_error("Error");
+    }
+
+    std::vector<std::vector<std::string>> columns(column_batch_size, std::vector<std::string>(rows_number_));
+    std::vector<Type> types(column_batch_size);
+    std::vector<std::string> names(column_batch_size);
+    for (size_t i = 0; i < column_batch_size; i++) {
+        fin_.read(reinterpret_cast<char*>(&types[i]), sizeof(uint8_t));
+        size_t size_str;
+        fin_.read(reinterpret_cast<char*>(&size_str), sizeof(size_t));
+        std::string str(size_str, '\0');
+        fin_.read(&str[0], size_str * sizeof(char));
+        names[i] = str;
+    }
+
+    batch_ = std::make_unique<Batch>(rows_number_, types, names);
+
+    for (size_t i = 0; i < column_batch_size; i++) {
+        if (types[i] == Type::Int16) {
+            std::vector<int16_t> column(rows_number_);
+            fin_.read(reinterpret_cast<char*>(&column[0]), rows_number_ * sizeof(int16_t));
+            for (size_t j = 0; j < rows_number_; j++) {
+                batch_->SetValue(j, i, ToString<int16_t>(column[j]));
             }
+        } else if (types[i] == Type::Int32) {
+            std::vector<int32_t> column(rows_number_);
+            fin_.read(reinterpret_cast<char*>(&column[0]), rows_number_ * sizeof(int32_t));
+            for (size_t j = 0; j < rows_number_; j++) {
+                batch_->SetValue(j, i, ToString<int32_t>(column[j]));
+            }
+        } else if (types[i] == Type::Int64) {
+            std::vector<int64_t> column(rows_number_);
+            fin_.read(reinterpret_cast<char*>(&column[0]), rows_number_ * sizeof(int64_t));
+            for (size_t j = 0; j < rows_number_; j++) {
+                batch_->SetValue(j, i, ToString<int64_t>(column[j]));
+            }
+        } else if (types[i] == Type::Int128) {
+            // TODO ??????????????????????????????????????????????????????????????????????????????????????????
+        } else if (types[i] == Type::Float) {
+            std::vector<float> column(rows_number_);
+            fin_.read(reinterpret_cast<char*>(&column[0]), rows_number_ * sizeof(float));
+            for (size_t j = 0; j < rows_number_; j++) {
+                batch_->SetValue(j, i, ToString<float>(column[j]));
+            }
+        } else if (types[i] == Type::Double) {
+            std::vector<double> column(rows_number_);
+            fin_.read(reinterpret_cast<char*>(&column[0]), rows_number_ * sizeof(double));
+            for (size_t j = 0; j < rows_number_; j++) {
+                batch_->SetValue(j, i, ToString<double>(column[j]));
+            }
+        } else if (types[i] == Type::Date) {
+            // TODO ??????????????????????????????????????????????????????????????????????????????????????????
+        } else if (types[i] == Type::Timestamp) {
+            // TODO ??????????????????????????????????????????????????????????????????????????????????????????
+        } else if (types[i] == Type::Char) {
+            std::vector<char> column(rows_number_);
+            fin_.read(reinterpret_cast<char*>(&column[0]), rows_number_ * sizeof(char));
+            for (size_t j = 0; j < rows_number_; j++) {
+                batch_->SetValue(j, i, ToString<char>(column[j]));
+            }
+        } else if (types[i] == Type::String) {
+            size_t size;
+            for (size_t j = 0; j < rows_number_; j++) {
+                fin_.read(reinterpret_cast<char*>(&size), sizeof(size_t));
+                std::string value(size, '\0');
+                fin_.read(&value[0], size * sizeof(char));
+                batch_->SetValue(j, i, ToString<std::string>(value));
+            }
+        } else {
+            throw std::runtime_error("Invalid type");
         }
-        columns_schema_.emplace_back(name, type);
     }
-    fin.close();
-}
-void Schema::Push(std::string name, Type type) {
-    columns_schema_.emplace_back(name, type);
-}
-size_t Schema::ColumnsNumber() {
-    return columns_schema_.size();
-}
-std::string Schema::GetString() {
-    std::string s;
-    for (size_t i = 0; i < columns_schema_.size(); i++) {
-        s = s + columns_schema_[i].GetString() + '\n';
-    }
-    return s;
-}
-std::string Schema::GetName(size_t col) {
-    if (col >= columns_schema_.size()) {
-        throw std::runtime_error("Index out of range {index " + std::to_string(col) + ", size " + std::to_string(columns_schema_.size()) + "}: Schema::GetName");
-    }
-    return columns_schema_[col].GetName();
-}
-Type Schema::GetType(size_t col) {
-    if (col >= columns_schema_.size()) {
-        throw std::runtime_error("Index out of range {index " + std::to_string(col) + ", size " + std::to_string(columns_schema_.size()) + "}: Schema::GetType");
-    }
-    return columns_schema_[col].GetType();
-}
 
-//----------------------Column----------------------
-Column::Column() {
-    column_ = std::vector<Value>(0);
+    column_batch_index_ = column_batch_index_ + column_batch_size;
 }
-void Column::Push(std::string value, Type type) {
-    switch (type) {
-        case Type::INT64:
-            try{
-                column_.push_back(std::stoll(value));
-            } catch(...) {
-                throw std::runtime_error("Invalid type: Column::Push Type::INT64");
+void Table::WriteBatch() {
+    size_t column_batch_size = batch_->GetSize();
+    std::vector<Type> types = batch_->GetTypes();
+    std::vector<std::string> names = batch_->GetNames();
+    fout_.write(reinterpret_cast<char*>(&column_batch_index_), sizeof(size_t));
+    fout_.write(reinterpret_cast<char*>(&column_batch_size), sizeof(size_t));
+    for (size_t i = 0; i < column_batch_size; i++) {
+        fout_.write(reinterpret_cast<char*>(&types[i]), sizeof(uint8_t));
+        size_t size_str = names[i].size();
+        fout_.write(reinterpret_cast<char*>(&size_str), sizeof(size_t));
+        fout_.write(names[i].c_str(), size_str * sizeof(char));
+    }
+
+    for (size_t i = 0; i < column_batch_size; i++) {
+        if (types[i] == Type::Int16) {
+            std::vector<int16_t> value(rows_number_);
+            for (size_t j = 0; j < rows_number_; j++) {
+                value[j] = FromString<int16_t>(batch_->GetValue(j, i));
             }
-            break;
-        case Type::STRING:
-            column_.push_back(value);
-            break;
-        default:
-            throw std::runtime_error("Invalid type: Column::Push");
+            fout_.write(reinterpret_cast<char*>(&value[0]), rows_number_ * sizeof(int16_t));
+        } else if (types[i] == Type::Int32) {
+            std::vector<int32_t> value(rows_number_);
+            for (size_t j = 0; j < rows_number_; j++) {
+                value[j] = FromString<int32_t>(batch_->GetValue(j, i));
+            }
+            fout_.write(reinterpret_cast<char*>(&value[0]), rows_number_ * sizeof(int32_t));
+        } else if (types[i] == Type::Int64) {
+            std::vector<int64_t> value(rows_number_);
+            for (size_t j = 0; j < rows_number_; j++) {
+                value[j] = FromString<int64_t>(batch_->GetValue(j, i));
+            }
+            fout_.write(reinterpret_cast<char*>(&value[0]), rows_number_ * sizeof(int64_t));
+        } else if (types[i] == Type::Int128) {
+            // TODO ??????????????????????????????????????????????????????????????????????????????????????????
+        } else if (types[i] == Type::Float) {
+            std::vector<float> value(rows_number_);
+            for (size_t j = 0; j < rows_number_; j++) {
+                value[j] = FromString<float>(batch_->GetValue(j, i));
+            }
+            fout_.write(reinterpret_cast<char*>(&value[0]), rows_number_ * sizeof(float));
+        } else if (types[i] == Type::Double) {
+            std::vector<double> value(rows_number_);
+            for (size_t j = 0; j < rows_number_; j++) {
+                value[j] = FromString<double>(batch_->GetValue(j, i));
+            }
+            fout_.write(reinterpret_cast<char*>(&value[0]), rows_number_ * sizeof(double));
+        } else if (types[i] == Type::Date) {
+            // TODO ??????????????????????????????????????????????????????????????????????????????????????????
+        } else if (types[i] == Type::Timestamp) {
+            // TODO ??????????????????????????????????????????????????????????????????????????????????????????
+        } else if (types[i] == Type::Char) {
+            std::vector<char> value(rows_number_);
+            for (size_t j = 0; j < rows_number_; j++) {
+                value[j] = FromString<char>(batch_->GetValue(j, i));
+            }
+            fout_.write(reinterpret_cast<char*>(&value[0]), rows_number_ * sizeof(char));
+        } else if (types[i] == Type::String) {
+            size_t size;
+            for (size_t j = 0; j < rows_number_; j++) {
+                std::string value = FromString<std::string>(batch_->GetValue(j, i));
+                size = value.size();
+                fout_.write(reinterpret_cast<char*>(&size), sizeof(size_t));
+                fout_.write(value.c_str(), size * sizeof(char));
+            }
+        } else {
+            throw std::runtime_error("Invalid type");
+        }
     }
-}
-std::string Column::GetValueString(size_t row) {
-    if (row >= column_.size()) {
-        throw std::runtime_error("Index out of range {index " + std::to_string(row) + ", size " + std::to_string(column_.size()) + "}: Column::GetValueString");
-    }
-    if (std::holds_alternative<int64_t>(column_[row])) {
-        return std::to_string(std::get<int64_t>(column_[row]));
-    }
-    if (std::holds_alternative<std::string>(column_[row])) {
-        return std::get<std::string>(column_[row]);
-    } 
-    throw std::runtime_error("Invalid type: Column::GetValueString");
-}
-size_t Column::RowsNumber() {
-    return column_.size();
-}
-
-//----------------------Table----------------------
-Table::Table(std::shared_ptr<Schema> schema) {
-    schema_ = schema;
-    for (size_t i = 0; i < schema_->ColumnsNumber(); i++) {
-        columns_data_.emplace_back();
-    }
-}
-void Table::Push(size_t col, std::string value, Type type) {
-    if (col >= columns_data_.size()) {
-        throw std::runtime_error("Index out of range {index " + std::to_string(col) + ", size " + std::to_string(columns_data_.size()) + "}: Table::Push");
-    }
-    columns_data_[col].Push(value, type);
-}
-std::string Table::GetValueString(size_t row, size_t col) {
-    if (col >= columns_data_.size()) {
-        throw std::runtime_error("Index out of range {index " + std::to_string(col) + ", size " + std::to_string(columns_data_.size()) + "}: Table::GetValueString");
-    }
-    return columns_data_[col].GetValueString(row);
-}
-size_t Table::RowsNumber() {
-    if (columns_data_.size() == 0) {
-        return 0;
-    }
-    return columns_data_[0].RowsNumber();
-}
-size_t Table::ColumnsNumber() {
-    return columns_data_.size();
 }
