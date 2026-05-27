@@ -1,11 +1,12 @@
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
 #include <fstream>
+#include <iostream>
 #include <string>
 #include <vector>
-#include <cstdint>
-#include <iostream>
-#include "objects.h"
+#include "src/objects.h"
 
 std::pair<std::string, char> ReadWordFromCsv(std::ifstream& fin);
 
