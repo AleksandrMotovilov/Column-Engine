@@ -2,11 +2,21 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-
-INPUT_CSV="${ROOT_DIR}/clickbench/hits_sample.csv"
-OUTPUT_CLMN="${ROOT_DIR}/clickbench/hits_sample.clmn"
-INPUT_SCHEMA="${ROOT_DIR}/clickbench/hits.schema"
 BIN="${ROOT_DIR}/build/exe/csv_to_clmn"
+
+usage() {
+    echo "Usage: script/convert.sh <input_csv> <output_columnar> [input_schema]" >&2
+    echo "  input_schema defaults to clickbench/hits.schema" >&2
+    exit 1
+}
+
+if [[ $# -lt 2 ]]; then
+    usage
+fi
+
+INPUT_CSV="$1"
+OUTPUT_CLMN="$2"
+INPUT_SCHEMA="${3:-${ROOT_DIR}/clickbench/hits.schema}"
 
 if [[ ! -x "${BIN}" ]]; then
     echo "ERROR: csv_to_clmn not found at ${BIN}" >&2
