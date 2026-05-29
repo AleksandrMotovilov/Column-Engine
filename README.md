@@ -10,22 +10,22 @@
 
 ```
 ┌─ батч 0 ──────────────────────────────────────────────────────┐
-│ metadata_offset : uint64_t   ← смещение до секции метаданных  │
-│ data_col_0      : raw bytes  ← данные первой колонки           │
+│ metadata_offset : uint64_t   <- смещение до секции метаданных  │
+│ data_col_0      : raw bytes  <- данные первой колонки           │
 │ data_col_1      : raw bytes                                    │
 │ ...                                                            │
 │ ── секция метаданных ──────────────────────────────────────── │
-│ batch_size      : size_t     ← число колонок в батче           │
-│ offset_col_0    : uint64_t   ← смещение от начала батча        │
-│ type_col_0      : uint8_t    ← тип колонки (enum Type)         │
+│ batch_size      : size_t     <- число колонок в батче           │
+│ offset_col_0    : uint64_t   <- смещение от начала батча        │
+│ type_col_0      : uint8_t    <- тип колонки (enum Type)         │
 │ name_len_0      : size_t                                       │
 │ name_0          : char[name_len_0]                             │
 │ ... (аналогично для каждой колонки батча)                      │
 └───────────────────────────────────────────────────────────────┘
 ┌─ батч 1 ─ ...
 ┌─ футер ───────────────────────────────────────────────────────┐
-│ rows_number    : size_t      ← общее число строк в таблице     │
-│ columns_number : size_t      ← общее число колонок             │
+│ rows_number    : size_t      <- общее число строк в таблице     │
+│ columns_number : size_t      <- общее число колонок             │
 └───────────────────────────────────────────────────────────────┘
 ```
 
@@ -45,7 +45,7 @@ cmake --build . --target test_convertion test_queries test_aggregation_functions
 ./tests/test_expressions
 ```
 
-- `test_convertion` — тесты `.csv` → `.clmn` → `.csv`.
+- `test_convertion` — тесты `.csv` -> `.clmn` -> `.csv`.
 - `test_queries` — тесты запросов Q0–Q42: строит план, выполняет, сравнивает результат с эталоном.
 - `test_aggregation_functions` — тесты агрегаций.
 - `test_expressions` — тесты выражений.
@@ -104,11 +104,14 @@ Q21: N/A
 
 ```
 src/
-  objects.h / objects.cpp        — типы данных (Batch, Column, Date, Timestamp, Type)
-  convertion/                    — конвертеры CSV ↔ .clmn
+  types.h / types.cpp            — Type, Date и Timestamp, FromString/ToString
+  column.h / column.cpp          — Column, ColumnTyped<T>, GetStringValueAt, CopyRowsTyped,
+                                   MakeSingleValueColumn, MakeColumnFromStrings
+  batch.h / batch.cpp            — Batch, kColumnBatchSize, kRowBatchSize, SetBatchSize
+  convertion/                    — конвертеры .csv <-> .clmn
   execution/                     — операторы запросов (Scan, Filter, Project, Agg, Sort, …)
 exe/
-  convert.cpp                    — CLI: конвертация CSV → .clmn
+  convert.cpp                    — CLI: конвертация .csv -> .clmn
   run_query.cpp                  — CLI: выполнение запроса по номеру
 tests/                           — GoogleTest
 clickbench/                      — датасет, схема, SQL-запросы, эталонные ответы
