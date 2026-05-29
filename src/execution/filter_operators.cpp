@@ -1,4 +1,5 @@
 #include "src/execution/filter_operators.h"
+#include "src/column.h"
 
 FilterOperator::FilterOperator(std::shared_ptr<Operator> next, std::shared_ptr<Expression> predicate) {
     next_ = std::move(next);
@@ -13,25 +14,23 @@ std::shared_ptr<Batch> FilterOperator::Next() {
     }
     if (!mask_computed_) {
         mask_computed_ = true;
-        mask_ = predicate_->Eval(batch);
+        std::shared_ptr<Column> mask_column = predicate_->Eval(batch);
+        mask_ = dynamic_cast<ColumnTyped<char>&>(*mask_column).GetVector();
     }
-    size_t count = 0;
-    for (size_t i = 0; i < batch->GetRowsNumber(); i++) {
-        if (mask_->GetValue(i) != "0") {
-            count++;
+    std::vector<size_t> indices;
+    indices.reserve(mask_.size());
+    for (size_t j = 0; j < mask_.size(); j++) {
+        if (mask_[j] != '0') {
+            indices.push_back(j);
         }
     }
     std::vector<Type> columns_types = batch->GetTypes();
     std::vector<std::string> columns_names = batch->GetNames();
-    std::shared_ptr<Batch> result = std::make_shared<Batch>(count, batch->GetColumnsNumber(), columns_types, columns_names);
-    size_t row = 0;
-    for (size_t i = 0; i < batch->GetRowsNumber(); i++) {
-        if (mask_->GetValue(i) != "0") {
-            for (size_t j = 0; j < batch->GetColumnsNumber(); j++) {
-                result->SetValue(row, j, batch->GetValue(i, j));
-            }
-            row++;
-        }
+    size_t columns_number = batch->GetColumnsNumber();
+    std::vector<std::shared_ptr<Column>> columns;
+    for (size_t i = 0; i < columns_number; i++) {
+        columns.push_back(CopyRowsTyped(batch->GetColumn(i), columns_types[i], indices));
     }
-    return result;
+    size_t count = indices.size();
+    return std::make_shared<Batch>(count, std::move(columns_names), std::move(columns_types), std::move(columns));
 }

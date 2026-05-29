@@ -4,16 +4,9 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstdint>
-#include <memory>
 #include <sstream>
 #include <stdexcept>
 #include <string>
-#include <vector>
-
-inline size_t kColumnBatchSize = 2;
-inline size_t kRowBatchSize = 2;
-
-void SetBatchSize(size_t column_batch_size, size_t row_batch_size);
 
 enum class Type : uint8_t {
     Int16,
@@ -32,15 +25,35 @@ class Date {
 public:
     Date();
     explicit Date(int32_t d);
-    int32_t days;
+    int32_t GetValue() const;
+
+private:
+    int32_t days_;
 };
+
+bool operator==(const Date& a, const Date& b);
+bool operator!=(const Date& a, const Date& b);
+bool operator<(const Date& a, const Date& b);
+bool operator>(const Date& a, const Date& b);
+bool operator<=(const Date& a, const Date& b);
+bool operator>=(const Date& a, const Date& b);
 
 class Timestamp {
 public:
     Timestamp();
     explicit Timestamp(int64_t s);
-    int64_t seconds;
+    int64_t GetValue() const;
+
+private:
+    int64_t seconds_;
 };
+
+bool operator==(const Timestamp& a, const Timestamp& b);
+bool operator!=(const Timestamp& a, const Timestamp& b);
+bool operator<(const Timestamp& a, const Timestamp& b);
+bool operator>(const Timestamp& a, const Timestamp& b);
+bool operator<=(const Timestamp& a, const Timestamp& b);
+bool operator>=(const Timestamp& a, const Timestamp& b);
 
 template<typename T>
 T FromString(std::string str) {
@@ -55,9 +68,7 @@ template<typename T>
 std::string ToString(T value) {
     std::stringstream ss;
     ss << value;
-    std::string str;
-    str = ss.str();
-    return str;
+    return ss.str();
 }
 
 template<>
@@ -153,7 +164,7 @@ inline Date FromString<Date>(std::string str) {
 template<>
 inline std::string ToString<Date>(Date value) {
     using namespace std::chrono;
-    year_month_day ymd = year_month_day{sys_days{days{value.days}}};
+    year_month_day ymd = year_month_day{sys_days{days{value.GetValue()}}};
     char buf[11];
     std::snprintf(buf, sizeof(buf), "%04d-%02u-%02u",
                   static_cast<int>(ymd.year()),
@@ -175,7 +186,7 @@ inline Timestamp FromString<Timestamp>(std::string str) {
 template<>
 inline std::string ToString<Timestamp>(Timestamp value) {
     using namespace std::chrono;
-    sys_time<seconds> tp = sys_time<seconds>{seconds{value.seconds}};
+    sys_time<seconds> tp = sys_time<seconds>{seconds{value.GetValue()}};
     sys_days dp = floor<days>(tp);
     year_month_day ymd = year_month_day{dp};
     hh_mm_ss<seconds> hms = hh_mm_ss<seconds>{tp - dp};
@@ -189,49 +200,3 @@ inline std::string ToString<Timestamp>(Timestamp value) {
                   static_cast<long long>(hms.seconds().count()));
     return std::string(buf);
 }
-
-class Column {
-public:
-    virtual ~Column() = default;
-    virtual void SetValue(size_t index, std::string value) = 0;
-    virtual std::string GetValue(size_t index) const = 0;
-    virtual size_t GetSize() const = 0;
-};
-
-template<typename T>
-class ColumnTyped : public Column {
-public:
-    ColumnTyped(size_t size) {
-        column_ = std::vector<T>(size);
-    }
-    size_t GetSize() const override {
-        return column_.size();
-    }
-    void SetValue(size_t index, std::string value) override {
-        column_[index] = FromString<T>(value);
-    }
-    std::string GetValue(size_t index) const override {
-        return ToString<T>(column_[index]);
-    }
-
-private:
-    std::vector<T> column_;
-};
-
-class Batch {
-public:
-    Batch(size_t rows_number, size_t columns_number, std::vector<Type> types, std::vector<std::string> names);
-    size_t GetColumnsNumber() const;
-    size_t GetRowsNumber() const;
-    std::vector<Type> GetTypes() const;
-    std::vector<std::string> GetNames() const;
-    void SetValue(size_t row_index, size_t column_index, std::string value);
-    std::string GetValue(size_t row_index, size_t column_index) const;
-
-private:
-    size_t rows_number_;
-    std::vector<std::unique_ptr<Column>> columns_;
-    std::vector<std::string> names_;
-    std::vector<Type> types_;
-};
-

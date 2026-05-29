@@ -6,7 +6,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "src/objects.h"
+#include "src/batch.h"
 
 std::pair<std::string, char> ReadWordFromCsv(std::ifstream& fin);
 

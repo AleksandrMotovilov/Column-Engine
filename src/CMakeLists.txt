@@ -1,4 +1,4 @@
-add_library(objects objects.cpp)
+add_library(objects types.cpp column.cpp batch.cpp)
 target_include_directories(objects PUBLIC ${CMAKE_SOURCE_DIR})
 
 add_library(converter_from_csv_to_clmn convertion/from_csv_to_clmn.cpp)

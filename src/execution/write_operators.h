@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <vector>
 #include "src/execution/operators.h"
-#include "src/objects.h"
+#include "src/batch.h"
 
 class WriteOperator : public Operator {
 public:

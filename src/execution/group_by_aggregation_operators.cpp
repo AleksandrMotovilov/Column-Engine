@@ -1,4 +1,5 @@
 #include "src/execution/group_by_aggregation_operators.h"
+#include "src/column.h"
 
 GroupByAggregationOperator::GroupByAggregationOperator(std::shared_ptr<Operator> next, std::vector<std::string> group_by_columns, AggregationFactory aggregation_factory) {
     next_ = std::move(next);
@@ -13,122 +14,119 @@ std::shared_ptr<Batch> GroupByAggregationOperator::Next() {
     }
     done_ = true;
 
-    std::shared_ptr<Batch> merged;
+    std::vector<std::shared_ptr<Column>> all_columns;
+    std::vector<std::string> all_names;
+    std::vector<Type> all_types;
+    size_t rows = 0;
 
     while (std::shared_ptr<Batch> batch = next_->Next()) {
-        if (merged == nullptr) {
-            merged = batch;
-            continue;
+        if (rows == 0) {
+            rows = batch->GetRowsNumber();
         }
-
-        size_t total_columns = merged->GetColumnsNumber() + batch->GetColumnsNumber();
-
-        std::vector<Type> columns_types = merged->GetTypes();
-        std::vector<Type> batch_types = batch->GetTypes();
-        columns_types.insert(columns_types.end(), batch_types.begin(), batch_types.end());
-
-        std::vector<std::string> columns_names = merged->GetNames();
-        std::vector<std::string> batch_names = batch->GetNames();
-        columns_names.insert(columns_names.end(), batch_names.begin(), batch_names.end());
-
-        std::shared_ptr<Batch> combined = std::make_shared<Batch>(merged->GetRowsNumber(), total_columns, columns_types, columns_names);
-        
-        for (size_t i = 0; i < merged->GetRowsNumber(); i++) {
-            for (size_t j = 0; j < merged->GetColumnsNumber(); j++) {
-                combined->SetValue(i, j, merged->GetValue(i, j));
-            }
-            for (size_t j = 0; j < batch->GetColumnsNumber(); j++) {
-                combined->SetValue(i, merged->GetColumnsNumber() + j, batch->GetValue(i, j));
-            }
-        }
-        merged = combined;
-    }
-
-    if (merged != nullptr) {
-        std::vector<std::string> columns_names = merged->GetNames();
-        std::vector<Type> columns_types = merged->GetTypes();
-        std::vector<size_t> group_column_indices;
-        std::vector<Type> group_column_types;
-        for (const std::string& gc : group_by_columns_) {
-            for (size_t i = 0; i < columns_names.size(); i++) {
-                if (columns_names[i] == gc) {
-                    group_column_indices.push_back(i);
-                    group_column_types.push_back(columns_types[i]);
-                    break;
-                }
-            }
-        }
-
-        std::map<std::vector<std::string>, size_t> key_to_index;
-        std::vector<std::vector<std::string>> keys;
-        std::vector<std::vector<size_t>> group_row_indices;
-        for (size_t row = 0; row < merged->GetRowsNumber(); row++) {
-            std::vector<std::string> key;
-            for (size_t gi : group_column_indices) {
-                key.push_back(merged->GetValue(row, gi));
-            }
-            std::map<std::vector<std::string>, size_t>::iterator it = key_to_index.find(key);
-            size_t index;
-            if (it == key_to_index.end()) {
-                index = keys.size();
-                key_to_index[key] = index;
-                keys.push_back(key);
-                group_row_indices.push_back({});
-            } else {
-                index = it->second;
-            }
-            group_row_indices[index].push_back(row);
-        }
-
-        if (!keys.empty()) {
-            size_t result_rows = keys.size();
-            size_t sub_cols = columns_names.size();
-            std::vector<std::vector<std::string>> agg_results(result_rows);
-            std::vector<Type> agg_types;
-            std::vector<std::string> agg_names;
-            for (size_t group_index = 0; group_index < result_rows; group_index++) {
-                const std::vector<size_t>& row_indices = group_row_indices[group_index];
-                size_t sub_rows = row_indices.size();
-                std::shared_ptr<Batch> sub = std::make_shared<Batch>(sub_rows, sub_cols, columns_types, columns_names);
-                for (size_t i = 0; i < sub_rows; i++) {
-                    for (size_t j = 0; j < sub_cols; j++) {
-                        sub->SetValue(i, j, merged->GetValue(row_indices[i], j));
-                    }
-                }
-                std::vector<std::shared_ptr<AggregationFunction>> aggregations = aggregation_factory_();
-                for (std::shared_ptr<AggregationFunction>& agg : aggregations) {
-                    agg->Update(sub);
-                    agg_results[group_index].push_back(agg->GetResult());
-                }
-                if (agg_types.empty()) {
-                    for (std::shared_ptr<AggregationFunction>& agg : aggregations) {
-                        agg_types.push_back(agg->GetType());
-                        agg_names.push_back(agg->GetName());
-                    }
-                }
-            }
-
-            std::vector<Type> result_types;
-            std::vector<std::string> result_names;
-            for (size_t i = 0; i < group_by_columns_.size(); i++) {
-                result_types.push_back(group_column_types[i]);
-                result_names.push_back(group_by_columns_[i]);
-            }
-            result_types.insert(result_types.end(), agg_types.begin(), agg_types.end());
-            result_names.insert(result_names.end(), agg_names.begin(), agg_names.end());
-            
-            std::shared_ptr<Batch> result = std::make_shared<Batch>(result_rows, result_types.size(), result_types, result_names);
-            for (size_t group_index = 0; group_index < result_rows; group_index++) {
-                size_t column = 0;
-                for (const std::string& key : keys[group_index]) {
-                    result->SetValue(group_index, column++, key);
-                }
-                for (const std::string& val : agg_results[group_index]) {
-                    result->SetValue(group_index, column++, val);
-                }
-            }
-            return result;
+        std::vector<std::string> names = batch->GetNames();
+        std::vector<Type> types = batch->GetTypes();
+        all_names.insert(all_names.end(), names.begin(), names.end());
+        all_types.insert(all_types.end(), types.begin(), types.end());
+        std::vector<std::shared_ptr<Column>> columns = batch->MoveColumns();
+        for (std::shared_ptr<Column>& column : columns) {
+            all_columns.push_back(std::move(column));
         }
     }
-    return nullptr;
+
+    if (all_names.empty()) {
+        return nullptr;
+    }
+
+    std::shared_ptr<Batch> merged = std::make_shared<Batch>(rows, std::move(all_names), std::move(all_types), std::move(all_columns));
+
+    std::vector<std::string> columns_names = merged->GetNames();
+    std::vector<Type> columns_types = merged->GetTypes();
+
+    std::vector<size_t> group_column_indices;
+    std::vector<Type> group_column_types;
+    for (const std::string& column_name : group_by_columns_) {
+        size_t index = merged->FindColumn(column_name);
+        group_column_indices.push_back(index);
+        group_column_types.push_back(columns_types[index]);
+    }
+
+    std::map<std::vector<std::string>, size_t> key_to_index;
+    std::vector<std::vector<std::string>> keys;
+    std::vector<std::vector<size_t>> group_row_indices;
+    for (size_t row = 0; row < merged->GetRowsNumber(); row++) {
+        std::vector<std::string> key;
+        for (size_t i = 0; i < group_column_indices.size(); i++) {
+            key.push_back(GetStringValueAt(merged->GetColumn(group_column_indices[i]), group_column_types[i], row));
+        }
+        std::map<std::vector<std::string>, size_t>::iterator it = key_to_index.find(key);
+        size_t index;
+        if (it == key_to_index.end()) {
+            index = keys.size();
+            key_to_index[key] = index;
+            keys.push_back(key);
+            group_row_indices.push_back({});
+        } else {
+            index = it->second;
+        }
+        group_row_indices[index].push_back(row);
+    }
+
+    if (keys.empty()) {
+        return nullptr;
+    }
+
+    size_t result_rows = keys.size();
+    size_t sub_columns_count = columns_names.size();
+    std::vector<std::vector<std::string>> aggregation_results(result_rows);
+    std::vector<Type> aggregation_types;
+    std::vector<std::string> aggregation_names;
+
+    for (size_t group_index = 0; group_index < result_rows; group_index++) {
+        const std::vector<size_t>& row_indices = group_row_indices[group_index];
+        std::vector<std::shared_ptr<Column>> sub_columns_vec;
+        for (size_t j = 0; j < sub_columns_count; j++) {
+            sub_columns_vec.push_back(CopyRowsTyped(merged->GetColumn(j), columns_types[j], row_indices));
+        }
+        std::vector<std::string> sub_names = columns_names;
+        std::vector<Type> sub_types = columns_types;
+        std::shared_ptr<Batch> sub = std::make_shared<Batch>(row_indices.size(), std::move(sub_names), std::move(sub_types), std::move(sub_columns_vec));
+        std::vector<std::shared_ptr<AggregationFunction>> aggregations = aggregation_factory_();
+        for (std::shared_ptr<AggregationFunction>& agg : aggregations) {
+            agg->Update(sub);
+            aggregation_results[group_index].push_back(agg->GetResult());
+        }
+        if (aggregation_types.empty()) {
+            for (std::shared_ptr<AggregationFunction>& agg : aggregations) {
+                aggregation_types.push_back(agg->GetType());
+                aggregation_names.push_back(agg->GetName());
+            }
+        }
+    }
+
+    std::vector<Type> result_types;
+    std::vector<std::string> result_names;
+    for (size_t i = 0; i < group_by_columns_.size(); i++) {
+        result_types.push_back(group_column_types[i]);
+        result_names.push_back(group_by_columns_[i]);
+    }
+    result_types.insert(result_types.end(), aggregation_types.begin(), aggregation_types.end());
+    result_names.insert(result_names.end(), aggregation_names.begin(), aggregation_names.end());
+
+    size_t total_cols = result_names.size();
+    std::vector<std::vector<std::string>> column_strings(total_cols);
+    for (size_t group_index = 0; group_index < result_rows; group_index++) {
+        for (size_t i = 0; i < group_by_columns_.size(); i++) {
+            column_strings[i].push_back(keys[group_index][i]);
+        }
+        for (size_t i = 0; i < aggregation_names.size(); i++) {
+            column_strings[group_by_columns_.size() + i].push_back(aggregation_results[group_index][i]);
+        }
+    }
+
+    std::vector<std::shared_ptr<Column>> result_columns;
+    for (size_t i = 0; i < total_cols; i++) {
+        result_columns.push_back(MakeColumnFromStrings(result_types[i], column_strings[i]));
+    }
+
+    return std::make_shared<Batch>(result_rows, std::move(result_names), std::move(result_types), std::move(result_columns));
 }

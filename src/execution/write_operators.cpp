@@ -23,62 +23,47 @@ std::shared_ptr<Batch> WriteOperator::Next() {
         std::vector<size_t> columns_offsets(column_batch_size);
         for (size_t i = 0; i < column_batch_size; i++) {
             columns_offsets[i] = static_cast<size_t>(fout_.tellp()) - batch_start;
+            const Column& column = *batch->GetColumn(i);
             if (columns_types[i] == Type::Int16) {
-                std::vector<int16_t> value(rows_number);
-                for (size_t j = 0; j < rows_number; j++) {
-                    value[j] = FromString<int16_t>(batch->GetValue(j, i));
-                }
-                fout_.write(reinterpret_cast<char*>(&value[0]), rows_number * sizeof(int16_t));
+                const std::vector<int16_t>& column_data = dynamic_cast<const ColumnTyped<int16_t>&>(column).GetData();
+                fout_.write(reinterpret_cast<const char*>(column_data.data()), rows_number * sizeof(int16_t));
             } else if (columns_types[i] == Type::Int32) {
-                std::vector<int32_t> value(rows_number);
-                for (size_t j = 0; j < rows_number; j++) {
-                    value[j] = FromString<int32_t>(batch->GetValue(j, i));
-                }
-                fout_.write(reinterpret_cast<char*>(&value[0]), rows_number * sizeof(int32_t));
+                const std::vector<int32_t>& column_data = dynamic_cast<const ColumnTyped<int32_t>&>(column).GetData();
+                fout_.write(reinterpret_cast<const char*>(column_data.data()), rows_number * sizeof(int32_t));
             } else if (columns_types[i] == Type::Int64) {
-                std::vector<int64_t> value(rows_number);
-                for (size_t j = 0; j < rows_number; j++) {
-                    value[j] = FromString<int64_t>(batch->GetValue(j, i));
-                }
-                fout_.write(reinterpret_cast<char*>(&value[0]), rows_number * sizeof(int64_t));
+                const std::vector<int64_t>& column_data = dynamic_cast<const ColumnTyped<int64_t>&>(column).GetData();
+                fout_.write(reinterpret_cast<const char*>(column_data.data()), rows_number * sizeof(int64_t));
             } else if (columns_types[i] == Type::Int128) {
                 // TODO ??????????????????????????????????????????????????????????????????????????????????????????
             } else if (columns_types[i] == Type::Float) {
-                std::vector<float> value(rows_number);
-                for (size_t j = 0; j < rows_number; j++) {
-                    value[j] = FromString<float>(batch->GetValue(j, i));
-                }
-                fout_.write(reinterpret_cast<char*>(&value[0]), rows_number * sizeof(float));
+                const std::vector<float>& column_data = dynamic_cast<const ColumnTyped<float>&>(column).GetData();
+                fout_.write(reinterpret_cast<const char*>(column_data.data()), rows_number * sizeof(float));
             } else if (columns_types[i] == Type::Double) {
-                std::vector<double> value(rows_number);
-                for (size_t j = 0; j < rows_number; j++) {
-                    value[j] = FromString<double>(batch->GetValue(j, i));
-                }
-                fout_.write(reinterpret_cast<char*>(&value[0]), rows_number * sizeof(double));
+                const std::vector<double>& column_data = dynamic_cast<const ColumnTyped<double>&>(column).GetData();
+                fout_.write(reinterpret_cast<const char*>(column_data.data()), rows_number * sizeof(double));
             } else if (columns_types[i] == Type::Date) {
-                std::vector<int32_t> value(rows_number);
+                const std::vector<Date>& column_data = dynamic_cast<const ColumnTyped<Date>&>(column).GetData();
+                std::vector<int32_t> raw(rows_number);
                 for (size_t j = 0; j < rows_number; j++) {
-                    value[j] = FromString<Date>(batch->GetValue(j, i)).days;
+                    raw[j] = column_data[j].GetValue();
                 }
-                fout_.write(reinterpret_cast<char*>(&value[0]), rows_number * sizeof(int32_t));
+                fout_.write(reinterpret_cast<const char*>(raw.data()), rows_number * sizeof(int32_t));
             } else if (columns_types[i] == Type::Timestamp) {
-                std::vector<int64_t> value(rows_number);
+                const std::vector<Timestamp>& column_data = dynamic_cast<const ColumnTyped<Timestamp>&>(column).GetData();
+                std::vector<int64_t> raw(rows_number);
                 for (size_t j = 0; j < rows_number; j++) {
-                    value[j] = FromString<Timestamp>(batch->GetValue(j, i)).seconds;
+                    raw[j] = column_data[j].GetValue();
                 }
-                fout_.write(reinterpret_cast<char*>(&value[0]), rows_number * sizeof(int64_t));
+                fout_.write(reinterpret_cast<const char*>(raw.data()), rows_number * sizeof(int64_t));
             } else if (columns_types[i] == Type::Char) {
-                std::vector<char> value(rows_number);
-                for (size_t j = 0; j < rows_number; j++) {
-                    value[j] = FromString<char>(batch->GetValue(j, i));
-                }
-                fout_.write(reinterpret_cast<char*>(&value[0]), rows_number * sizeof(char));
+                const std::vector<char>& column_data = dynamic_cast<const ColumnTyped<char>&>(column).GetData();
+                fout_.write(column_data.data(), rows_number * sizeof(char));
             } else if (columns_types[i] == Type::String) {
+                const std::vector<std::string>& column_data = dynamic_cast<const ColumnTyped<std::string>&>(column).GetData();
                 for (size_t j = 0; j < rows_number; j++) {
-                    std::string value = FromString<std::string>(batch->GetValue(j, i));
-                    size_t str_size = value.size();
+                    size_t str_size = column_data[j].size();
                     fout_.write(reinterpret_cast<char*>(&str_size), sizeof(size_t));
-                    fout_.write(value.c_str(), str_size * sizeof(char));
+                    fout_.write(column_data[j].c_str(), str_size * sizeof(char));
                 }
             } else {
                 throw std::runtime_error("Invalid type :: WriteOperator");

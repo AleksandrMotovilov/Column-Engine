@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "src/execution/aggregation_functions.h"
+#include "src/column.h"
 
 std::shared_ptr<Batch> MakeBatch(
     size_t rows,
@@ -7,13 +8,11 @@ std::shared_ptr<Batch> MakeBatch(
     std::vector<std::string> names,
     std::vector<std::vector<std::string>> values)
 {
-    std::shared_ptr<Batch> batch = std::make_shared<Batch>(rows, types.size(), types, names);
-    for (size_t r = 0; r < rows; r++) {
-        for (size_t c = 0; c < types.size(); c++) {
-            batch->SetValue(r, c, values[c][r]);
-        }
+    std::vector<std::shared_ptr<Column>> cols;
+    for (size_t j = 0; j < types.size(); j++) {
+        cols.push_back(MakeColumnFromStrings(types[j], values[j]));
     }
-    return batch;
+    return std::make_shared<Batch>(rows, std::move(names), std::move(types), std::move(cols));
 }
 
 TEST(AggregationFunctions, CountRows) {
@@ -53,8 +52,7 @@ TEST(AggregationFunctions, CountDistinct_column_not_found) {
 
     std::shared_ptr<Batch> batch = MakeBatch(2, {Type::Int32}, {"x"}, {{"1", "2"}});
     CountDistinctAggregation aggregation("missing");
-    aggregation.Update(batch);
-    EXPECT_EQ(aggregation.GetResult(), "0");
+    EXPECT_THROW(aggregation.Update(batch), std::runtime_error);
 }
 
 TEST(AggregationFunctions, Sum) {
@@ -78,8 +76,7 @@ TEST(AggregationFunctions, Sum_column_not_found) {
 
     std::shared_ptr<Batch> batch = MakeBatch(3, {Type::Int64}, {"val"}, {{"1", "2", "3"}});
     SumAggregation aggregation("missing");
-    aggregation.Update(batch);
-    EXPECT_EQ(aggregation.GetResult(), "0");
+    EXPECT_THROW(aggregation.Update(batch), std::runtime_error);
 }
 
 TEST(AggregationFunctions, Avg) {
@@ -111,8 +108,7 @@ TEST(AggregationFunctions, Avg_column_not_found) {
 
     std::shared_ptr<Batch> batch = MakeBatch(3, {Type::Int64}, {"score"}, {{"10", "20", "30"}});
     AvgAggregation aggregation("missing");
-    aggregation.Update(batch);
-    EXPECT_EQ(aggregation.GetResult(), "0");
+    EXPECT_THROW(aggregation.Update(batch), std::runtime_error);
 }
 
 TEST(AggregationFunctions, Min_int) {
@@ -135,8 +131,7 @@ TEST(AggregationFunctions, Min_column_not_found) {
 
     std::shared_ptr<Batch> batch = MakeBatch(3, {Type::Int64}, {"n"}, {{"5", "1", "3"}});
     MinAggregation aggregation("missing");
-    aggregation.Update(batch);
-    EXPECT_EQ(aggregation.GetResult(), "");
+    EXPECT_THROW(aggregation.Update(batch), std::runtime_error);
 }
 
 TEST(AggregationFunctions, Max_int) {
@@ -159,8 +154,7 @@ TEST(AggregationFunctions, Max_column_not_found) {
 
     std::shared_ptr<Batch> batch = MakeBatch(3, {Type::Int64}, {"n"}, {{"5", "1", "3"}});
     MaxAggregation aggregation("missing");
-    aggregation.Update(batch);
-    EXPECT_EQ(aggregation.GetResult(), "");
+    EXPECT_THROW(aggregation.Update(batch), std::runtime_error);
 }
 
 TEST(AggregationFunctions, Min_date) {
@@ -236,4 +230,3 @@ TEST(AggregationFunctions, SumWithOffset_nonzero) {
     EXPECT_EQ(aggregation.GetType(), Type::Int64);
     EXPECT_EQ(aggregation.GetName(), "sum(v+5)");
 }
-

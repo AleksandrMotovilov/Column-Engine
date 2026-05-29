@@ -206,13 +206,13 @@ void ConvertFromCsvToClmn(const std::string& file_csv, const std::string& file_s
             } else if (columns_types[column_batch_index + i] == Type::Date) {
                 std::vector<int32_t> value(rows_number);
                 for (size_t j = 0; j < rows_number; j++) {
-                    value[j] = FromString<Date>(columns[i][j]).days;
+                    value[j] = FromString<Date>(columns[i][j]).GetValue();
                 }
                 fout_clmn.write(reinterpret_cast<char*>(&value[0]), rows_number * sizeof(int32_t));
             } else if (columns_types[column_batch_index + i] == Type::Timestamp) {
                 std::vector<int64_t> value(rows_number);
                 for (size_t j = 0; j < rows_number; j++) {
-                    value[j] = FromString<Timestamp>(columns[i][j]).seconds;
+                    value[j] = FromString<Timestamp>(columns[i][j]).GetValue();
                 }
                 fout_clmn.write(reinterpret_cast<char*>(&value[0]), rows_number * sizeof(int64_t));
             } else if (columns_types[column_batch_index + i] == Type::Char) {

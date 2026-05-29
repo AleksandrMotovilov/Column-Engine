@@ -7,7 +7,7 @@
 #include <vector>
 #include "src/execution/aggregation_functions.h"
 #include "src/execution/operators.h"
-#include "src/objects.h"
+#include "src/batch.h"
 
 class GroupByAggregationOperator : public Operator {
 public:

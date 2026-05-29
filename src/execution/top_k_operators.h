@@ -5,7 +5,7 @@
 #include <numeric>
 #include <vector>
 #include "src/execution/operators.h"
-#include "src/objects.h"
+#include "src/batch.h"
 
 class TopKOperator : public Operator {
 public:

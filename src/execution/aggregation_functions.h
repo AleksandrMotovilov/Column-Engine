@@ -2,8 +2,7 @@
 
 #include <memory>
 #include <string>
-#include <unordered_set>
-#include "src/objects.h"
+#include "src/batch.h"
 
 class AggregationFunction {
 public:
@@ -35,7 +34,7 @@ public:
 
 private:
     std::string column_name_;
-    std::unordered_set<std::string> distinct_values_;
+    int64_t count_ = 0;
 };
 
 class SumAggregation : public AggregationFunction {
@@ -62,7 +61,7 @@ public:
 private:
     std::string column_name_;
     __int128 sum_ = 0;
-    int64_t count_ = 0;
+    __int128 count_ = 0;
 };
 
 class MinAggregation : public AggregationFunction {
@@ -74,11 +73,9 @@ public:
     std::string GetName() const override;
 
 private:
-    bool IsLess(const std::string& a, const std::string& b);
     std::string column_name_;
     std::string min_value_;
-    bool has_value_;
-    Type column_type_;
+    Type column_type_ = Type::Int64;
 };
 
 class MaxAggregation : public AggregationFunction {
@@ -90,11 +87,9 @@ public:
     std::string GetName() const override;
 
 private:
-    bool IsGreater(const std::string& a, const std::string& b);
     std::string column_name_;
     std::string max_value_;
-    bool has_value_;
-    Type column_type_;
+    Type column_type_ = Type::Int64;
 };
 
 class SumWithOffsetAggregation : public AggregationFunction {
@@ -110,4 +105,3 @@ private:
     int64_t offset_;
     __int128 sum_ = 0;
 };
-

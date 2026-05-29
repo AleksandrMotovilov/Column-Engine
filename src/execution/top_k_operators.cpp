@@ -1,4 +1,5 @@
 #include "src/execution/top_k_operators.h"
+#include "src/column.h"
 
 TopKOperator::TopKOperator(std::shared_ptr<Operator> next, std::vector<std::string> sort_columns, size_t limit, bool descending) {
     next_ = std::move(next);
@@ -46,7 +47,7 @@ static int CompareValues(const std::string& a, const std::string& b, Type type) 
                 return -1;
             }
             if (va > vb) {
-                return 1; 
+                return 1;
             }
             return 0;
         }
@@ -61,7 +62,7 @@ static int CompareValues(const std::string& a, const std::string& b, Type type) 
             return 0;
         }
         case Type::Date: {
-            int32_t va = FromString<Date>(a).days, vb = FromString<Date>(b).days;
+            int32_t va = FromString<Date>(a).GetValue(), vb = FromString<Date>(b).GetValue();
             if (va < vb) {
                 return -1;
             }
@@ -71,7 +72,7 @@ static int CompareValues(const std::string& a, const std::string& b, Type type) 
             return 0;
         }
         case Type::Timestamp: {
-            int64_t va = FromString<Timestamp>(a).seconds, vb = FromString<Timestamp>(b).seconds;
+            int64_t va = FromString<Timestamp>(a).GetValue(), vb = FromString<Timestamp>(b).GetValue();
             if (va < vb) {
                 return -1;
             }
@@ -97,76 +98,82 @@ std::shared_ptr<Batch> TopKOperator::Next() {
         return nullptr;
     }
     done_ = true;
-    std::shared_ptr<Batch> merged;
+
+    std::vector<std::shared_ptr<Column>> all_columns;
+    std::vector<std::string> all_names;
+    std::vector<Type> all_types;
+    size_t rows = 0;
+
     while (std::shared_ptr<Batch> batch = next_->Next()) {
-        if (merged == nullptr) {
-            merged = batch;
-            continue;
+        if (rows == 0) {
+            rows = batch->GetRowsNumber();
         }
-
-        size_t total_columns = merged->GetColumnsNumber() + batch->GetColumnsNumber();
-
-        std::vector<Type> columns_types = merged->GetTypes();
-        std::vector<Type> batch_types = batch->GetTypes();
-        columns_types.insert(columns_types.end(), batch_types.begin(), batch_types.end());
-
-        std::vector<std::string> columns_names = merged->GetNames();
-        std::vector<std::string> batch_names = batch->GetNames();
-        columns_names.insert(columns_names.end(), batch_names.begin(), batch_names.end());
-
-        std::shared_ptr<Batch> combined = std::make_shared<Batch>(merged->GetRowsNumber(), total_columns, columns_types, columns_names);
-        for (size_t i = 0; i < merged->GetRowsNumber(); i++) {
-            for (size_t j = 0; j < merged->GetColumnsNumber(); j++) {
-                combined->SetValue(i, j, merged->GetValue(i, j));
-            }
-            for (size_t j = 0; j < batch->GetColumnsNumber(); j++) {
-                combined->SetValue(i, merged->GetColumnsNumber() + j, batch->GetValue(i, j));
-            }
+        std::vector<std::string> names = batch->GetNames();
+        std::vector<Type> types = batch->GetTypes();
+        all_names.insert(all_names.end(), names.begin(), names.end());
+        all_types.insert(all_types.end(), types.begin(), types.end());
+        std::vector<std::shared_ptr<Column>> columns = batch->MoveColumns();
+        for (std::shared_ptr<Column>& column : columns) {
+            all_columns.push_back(std::move(column));
         }
-        merged = combined;
     }
-    if (merged != nullptr) {
-        std::vector<Type> columns_types = merged->GetTypes();
-        std::vector<std::string> columns_names = merged->GetNames();
-        size_t k = std::min(limit_, merged->GetRowsNumber());
-        std::vector<size_t> indices(merged->GetRowsNumber());
-        std::iota(indices.begin(), indices.end(), 0);
 
-        std::vector<std::pair<size_t, Type>> sort_keys;
-        for (const auto& column_name : sort_columns_) {
-            for (size_t i = 0; i < columns_names.size(); i++) {
-                if (columns_names[i] == column_name) {
-                    sort_keys.emplace_back(i, columns_types[i]);
-                    break;
-                }
+    if (all_names.empty()) {
+        return nullptr;
+    }
+
+    std::shared_ptr<Batch> merged = std::make_shared<Batch>(rows, std::move(all_names), std::move(all_types), std::move(all_columns));
+
+    std::vector<Type> columns_types = merged->GetTypes();
+    std::vector<std::string> columns_names = merged->GetNames();
+    size_t k = std::min(limit_, merged->GetRowsNumber());
+    std::vector<size_t> indices(merged->GetRowsNumber());
+    std::iota(indices.begin(), indices.end(), 0);
+
+    std::vector<std::pair<size_t, Type>> sort_keys;
+    for (const std::string& column_name : sort_columns_) {
+        for (size_t i = 0; i < columns_names.size(); i++) {
+            if (columns_names[i] == column_name) {
+                sort_keys.emplace_back(i, columns_types[i]);
+                break;
             }
         }
+    }
 
-        if (!sort_keys.empty()) {
-            std::partial_sort(indices.begin(), indices.begin() + k, indices.end(),
-                [&](size_t a, size_t b) -> bool {
-                    for (const auto& key : sort_keys) {
-                        int cmp = CompareValues(
-                            merged->GetValue(a, key.first),
-                            merged->GetValue(b, key.first),
-                            key.second);
-                        if (descending_) { cmp = -cmp; }
-                        if (cmp < 0) { return true; }
-                        if (cmp > 0) { return false; }
+    if (!sort_keys.empty()) {
+        std::vector<std::vector<std::string>> sort_column_strings(sort_keys.size());
+        for (size_t i = 0; i < sort_keys.size(); i++) {
+            size_t column_index = sort_keys[i].first;
+            Type column_type = sort_keys[i].second;
+            sort_column_strings[i].resize(merged->GetRowsNumber());
+            for (size_t j = 0; j < merged->GetRowsNumber(); j++) {
+                sort_column_strings[i][j] = GetStringValueAt(merged->GetColumn(column_index), column_type, j);
+            }
+        }
+        std::partial_sort(indices.begin(), indices.begin() + k, indices.end(),
+            [&](size_t a, size_t b) -> bool {
+                for (size_t i = 0; i < sort_keys.size(); i++) {
+                    int cmp = CompareValues(sort_column_strings[i][a], sort_column_strings[i][b], sort_keys[i].second);
+                    if (descending_) {
+                        cmp = -cmp;
                     }
-                    return false;
-                });
-        }
-
-        columns_types.resize(merged->GetColumnsNumber());
-        columns_names.resize(merged->GetColumnsNumber());
-        std::shared_ptr<Batch> result = std::make_shared<Batch>(k, merged->GetColumnsNumber(), columns_types, columns_names);
-        for (size_t i = 0; i < k; i++) {
-            for (size_t j = 0; j < merged->GetColumnsNumber(); j++) {
-                result->SetValue(i, j, merged->GetValue(indices[i], j));
-            }
-        }
-        return result;
+                    if (cmp < 0) {
+                        return true;
+                    }
+                    if (cmp > 0) {
+                        return false;
+                    }
+                }
+                return false;
+            });
     }
-    return nullptr;
+
+    std::vector<size_t> top_k_indices(indices.begin(), indices.begin() + k);
+    std::vector<std::shared_ptr<Column>> columns;
+    size_t columns_number = merged->GetColumnsNumber();
+    for (size_t i = 0; i < columns_number; i++) {
+        columns.push_back(CopyRowsTyped(merged->GetColumn(i), columns_types[i], top_k_indices));
+    }
+
+    return std::make_shared<Batch>(k, std::move(columns_names), std::move(columns_types), std::move(columns));
 }

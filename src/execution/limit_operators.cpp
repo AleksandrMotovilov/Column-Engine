@@ -1,4 +1,5 @@
 #include "src/execution/limit_operators.h"
+#include "src/column.h"
 
 LimitOperator::LimitOperator(std::shared_ptr<Operator> next, size_t limit) {
     next_ = std::move(next);
@@ -14,15 +15,16 @@ std::shared_ptr<Batch> LimitOperator::Next() {
     if (rows == batch->GetRowsNumber()) {
         return batch;
     }
+    std::vector<size_t> indices(rows);
+    std::iota(indices.begin(), indices.end(), 0);
     std::vector<Type> columns_types = batch->GetTypes();
     std::vector<std::string> columns_names = batch->GetNames();
-    std::shared_ptr<Batch> result = std::make_shared<Batch>(rows, batch->GetColumnsNumber(), columns_types, columns_names);
-    for (size_t i = 0; i < rows; i++) {
-        for (size_t j = 0; j < batch->GetColumnsNumber(); j++) {
-            result->SetValue(i, j, batch->GetValue(i, j));
-        }
+    size_t columns_number = batch->GetColumnsNumber();
+    std::vector<std::shared_ptr<Column>> columns;
+    for (size_t i = 0; i < columns_number; i++) {
+        columns.push_back(CopyRowsTyped(batch->GetColumn(i), columns_types[i], indices));
     }
-    return result;
+    return std::make_shared<Batch>(rows, std::move(columns_names), std::move(columns_types), std::move(columns));
 }
 
 OffsetOperator::OffsetOperator(std::shared_ptr<Operator> next, size_t offset) {
@@ -35,19 +37,20 @@ std::shared_ptr<Batch> OffsetOperator::Next() {
     if (batch == nullptr) {
         return nullptr;
     }
-    size_t rows = batch->GetRowsNumber();
-    size_t start = std::min(offset_, rows);
-    size_t new_rows = rows - start;
+    size_t total_rows = batch->GetRowsNumber();
+    size_t start = std::min(offset_, total_rows);
+    size_t rows = total_rows - start;
     if (start == 0) {
         return batch;
     }
+    std::vector<size_t> indices(rows);
+    std::iota(indices.begin(), indices.end(), start);
     std::vector<Type> columns_types = batch->GetTypes();
     std::vector<std::string> columns_names = batch->GetNames();
-    std::shared_ptr<Batch> result = std::make_shared<Batch>(new_rows, batch->GetColumnsNumber(), columns_types, columns_names);
-    for (size_t i = 0; i < new_rows; i++) {
-        for (size_t j = 0; j < batch->GetColumnsNumber(); j++) {
-            result->SetValue(i, j, batch->GetValue(start + i, j));
-        }
+    size_t columns_number = batch->GetColumnsNumber();
+    std::vector<std::shared_ptr<Column>> columns;
+    for (size_t i = 0; i < columns_number; i++) {
+        columns.push_back(CopyRowsTyped(batch->GetColumn(i), columns_types[i], indices));
     }
-    return result;
+    return std::make_shared<Batch>(rows, std::move(columns_names), std::move(columns_types), std::move(columns));
 }
