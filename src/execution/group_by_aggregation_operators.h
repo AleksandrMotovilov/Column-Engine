@@ -2,12 +2,12 @@
 
 #include <algorithm>
 #include <functional>
-#include <map>
+#include <unordered_map>
 #include <memory>
 #include <vector>
 #include "src/execution/aggregation_functions.h"
 #include "src/execution/operators.h"
-#include "src/objects.h"
+#include "src/kernel/batch.h"
 
 class GroupByAggregationOperator : public Operator {
 public:

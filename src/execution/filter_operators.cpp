@@ -1,9 +1,9 @@
 #include "src/execution/filter_operators.h"
+#include "src/kernel/column_utils.h"
 
 FilterOperator::FilterOperator(std::shared_ptr<Operator> next, std::shared_ptr<Expression> predicate) {
     next_ = std::move(next);
     predicate_ = std::move(predicate);
-    mask_computed_ = false;
 }
 
 std::shared_ptr<Batch> FilterOperator::Next() {
@@ -11,27 +11,20 @@ std::shared_ptr<Batch> FilterOperator::Next() {
     if (batch == nullptr) {
         return nullptr;
     }
-    if (!mask_computed_) {
-        mask_computed_ = true;
-        mask_ = predicate_->Eval(batch);
-    }
-    size_t count = 0;
-    for (size_t i = 0; i < batch->GetRowsNumber(); i++) {
-        if (mask_->GetValue(i) != "0") {
-            count++;
+    std::shared_ptr<Column> mask_column = predicate_->Eval(batch);
+    const std::vector<char>& mask = dynamic_cast<const ColumnTyped<char>&>(*mask_column).GetData();
+    std::vector<size_t> indices;
+    indices.reserve(mask.size());
+    for (size_t j = 0; j < mask.size(); j++) {
+        if (mask[j] != '0') {
+            indices.push_back(j);
         }
     }
-    std::vector<Type> columns_types = batch->GetTypes();
-    std::vector<std::string> columns_names = batch->GetNames();
-    std::shared_ptr<Batch> result = std::make_shared<Batch>(count, batch->GetColumnsNumber(), columns_types, columns_names);
-    size_t row = 0;
-    for (size_t i = 0; i < batch->GetRowsNumber(); i++) {
-        if (mask_->GetValue(i) != "0") {
-            for (size_t j = 0; j < batch->GetColumnsNumber(); j++) {
-                result->SetValue(row, j, batch->GetValue(i, j));
-            }
-            row++;
-        }
+    std::shared_ptr<Schema> schema = batch->GetSchema();
+    size_t columns_number = schema->GetColumnsNumber();
+    std::vector<std::shared_ptr<Column>> columns;
+    for (size_t i = 0; i < columns_number; i++) {
+        columns.push_back(CopyRowsTyped(batch->GetColumn(i), schema->GetType(i), indices));
     }
-    return result;
+    return std::make_shared<Batch>(indices.size(), schema, std::move(columns));
 }

@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "src/execution/expressions.h"
+#include "src/kernel/column_utils.h"
 
 std::shared_ptr<Batch> MakeBatch(
     size_t rows,
@@ -7,13 +8,43 @@ std::shared_ptr<Batch> MakeBatch(
     std::vector<std::string> names,
     std::vector<std::vector<std::string>> values)
 {
-    std::shared_ptr<Batch> batch = std::make_shared<Batch>(rows, types.size(), types, names);
-    for (size_t i = 0; i < rows; i++) {
-        for (size_t j = 0; j < types.size(); j++) {
-            batch->SetValue(i, j, values[j][i]);
-        }
+    std::vector<std::shared_ptr<Column>> cols;
+    for (size_t j = 0; j < types.size(); j++) {
+        cols.push_back(MakeColumnFromStrings(types[j], values[j]));
     }
-    return batch;
+    return std::make_shared<Batch>(rows, std::make_shared<Schema>(std::move(names), std::move(types)), std::move(cols));
+}
+
+static std::string GetResultValue(const Column* col, size_t i) {
+    if (auto* p = dynamic_cast<const ColumnTyped<char>*>(col)) {
+        char c = p->GetData()[i];
+        return std::string(1, c);
+    }
+    if (auto* p = dynamic_cast<const ColumnTyped<int64_t>*>(col)) {
+        return ToString<int64_t>(p->GetData()[i]);
+    }
+    if (auto* p = dynamic_cast<const ColumnTyped<int32_t>*>(col)) {
+        return ToString<int32_t>(p->GetData()[i]);
+    }
+    if (auto* p = dynamic_cast<const ColumnTyped<int16_t>*>(col)) {
+        return ToString<int16_t>(p->GetData()[i]);
+    }
+    if (auto* p = dynamic_cast<const ColumnTyped<float>*>(col)) {
+        return ToString<float>(p->GetData()[i]);
+    }
+    if (auto* p = dynamic_cast<const ColumnTyped<double>*>(col)) {
+        return ToString<double>(p->GetData()[i]);
+    }
+    if (auto* p = dynamic_cast<const ColumnTyped<std::string>*>(col)) {
+        return p->GetData()[i];
+    }
+    if (auto* p = dynamic_cast<const ColumnTyped<Timestamp>*>(col)) {
+        return ToString<Timestamp>(p->GetData()[i]);
+    }
+    if (auto* p = dynamic_cast<const ColumnTyped<Date>*>(col)) {
+        return ToString<Date>(p->GetData()[i]);
+    }
+    throw std::runtime_error("Unknown column type in GetResultValue");
 }
 
 TEST(Expressions, Equal) {
@@ -28,10 +59,10 @@ TEST(Expressions, Equal) {
     EqualExpression expr("id", "2");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 4u);
-    EXPECT_EQ(result->GetValue(0), "0");
-    EXPECT_EQ(result->GetValue(1), "1");
-    EXPECT_EQ(result->GetValue(2), "0");
-    EXPECT_EQ(result->GetValue(3), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 2), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 3), "1");
 }
 
 TEST(Expressions, Equal_column_not_found) {
@@ -54,10 +85,10 @@ TEST(Expressions, NotEqual) {
     NotEqualExpression expr("name", "");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 4u);
-    EXPECT_EQ(result->GetValue(0), "1");
-    EXPECT_EQ(result->GetValue(1), "0");
-    EXPECT_EQ(result->GetValue(2), "1");
-    EXPECT_EQ(result->GetValue(3), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 2), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 3), "0");
 }
 
 TEST(Expressions, NotEqual_column_not_found) {
@@ -80,10 +111,10 @@ TEST(Expressions, Contains) {
     ContainsExpression expr("url", "google");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 4u);
-    EXPECT_EQ(result->GetValue(0), "1");
-    EXPECT_EQ(result->GetValue(1), "0");
-    EXPECT_EQ(result->GetValue(2), "1");
-    EXPECT_EQ(result->GetValue(3), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 2), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 3), "0");
 }
 
 TEST(Expressions, Contains_column_not_found) {
@@ -106,10 +137,10 @@ TEST(Expressions, NotContains) {
     NotContainsExpression expr("url", "google");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 4u);
-    EXPECT_EQ(result->GetValue(0), "0");
-    EXPECT_EQ(result->GetValue(1), "1");
-    EXPECT_EQ(result->GetValue(2), "0");
-    EXPECT_EQ(result->GetValue(3), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 2), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 3), "1");
 }
 
 TEST(Expressions, NotContains_column_not_found) {
@@ -132,10 +163,10 @@ TEST(Expressions, GreaterOrEqual_int) {
     GreaterOrEqualExpression expr("score", "10");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 4u);
-    EXPECT_EQ(result->GetValue(0), "0");
-    EXPECT_EQ(result->GetValue(1), "1");
-    EXPECT_EQ(result->GetValue(2), "0");
-    EXPECT_EQ(result->GetValue(3), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 2), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 3), "1");
 }
 
 TEST(Expressions, GreaterOrEqual_date) {
@@ -150,9 +181,9 @@ TEST(Expressions, GreaterOrEqual_date) {
     GreaterOrEqualExpression expr("d", "2013-07-01");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 3u);
-    EXPECT_EQ(result->GetValue(0), "1");
-    EXPECT_EQ(result->GetValue(1), "0");
-    EXPECT_EQ(result->GetValue(2), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 2), "1");
 }
 
 TEST(Expressions, GreaterOrEqual_string) {
@@ -167,9 +198,9 @@ TEST(Expressions, GreaterOrEqual_string) {
     GreaterOrEqualExpression expr("name", "banana");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 3u);
-    EXPECT_EQ(result->GetValue(0), "0");
-    EXPECT_EQ(result->GetValue(1), "1");
-    EXPECT_EQ(result->GetValue(2), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 2), "1");
 }
 
 TEST(Expressions, GreaterOrEqual_column_not_found) {
@@ -192,10 +223,10 @@ TEST(Expressions, LessOrEqual_int) {
     LessOrEqualExpression expr("score", "5");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 4u);
-    EXPECT_EQ(result->GetValue(0), "1");
-    EXPECT_EQ(result->GetValue(1), "0");
-    EXPECT_EQ(result->GetValue(2), "1");
-    EXPECT_EQ(result->GetValue(3), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 2), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 3), "0");
 }
 
 TEST(Expressions, LessOrEqual_date) {
@@ -210,9 +241,9 @@ TEST(Expressions, LessOrEqual_date) {
     LessOrEqualExpression expr("d", "2013-07-31");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 3u);
-    EXPECT_EQ(result->GetValue(0), "1");
-    EXPECT_EQ(result->GetValue(1), "0");
-    EXPECT_EQ(result->GetValue(2), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 2), "1");
 }
 
 TEST(Expressions, LessOrEqual_string) {
@@ -227,9 +258,9 @@ TEST(Expressions, LessOrEqual_string) {
     LessOrEqualExpression expr("name", "banana");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 3u);
-    EXPECT_EQ(result->GetValue(0), "1");
-    EXPECT_EQ(result->GetValue(1), "1");
-    EXPECT_EQ(result->GetValue(2), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 2), "0");
 }
 
 TEST(Expressions, LessOrEqual_column_not_found) {
@@ -247,9 +278,9 @@ TEST(Expressions, Constant) {
     ConstantExpression expr("42");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 3u);
-    EXPECT_EQ(result->GetValue(0), "42");
-    EXPECT_EQ(result->GetValue(1), "42");
-    EXPECT_EQ(result->GetValue(2), "42");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "42");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "42");
+    EXPECT_EQ(GetResultValue(result.get(), 2), "42");
 }
 
 TEST(Expressions, Sub) {
@@ -261,12 +292,12 @@ TEST(Expressions, Sub) {
         {"ip"},
         {{"100", "200", "300"}}
     );
-    SubExpression expr("ip", 1);
+    SumExpression expr("ip", -1);
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 3u);
-    EXPECT_EQ(result->GetValue(0), "99");
-    EXPECT_EQ(result->GetValue(1), "199");
-    EXPECT_EQ(result->GetValue(2), "299");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "99");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "199");
+    EXPECT_EQ(GetResultValue(result.get(), 2), "299");
 }
 
 TEST(Expressions, Sum) {
@@ -281,16 +312,16 @@ TEST(Expressions, Sum) {
     SumExpression expr("x", 5);
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 3u);
-    EXPECT_EQ(result->GetValue(0), "15");
-    EXPECT_EQ(result->GetValue(1), "25");
-    EXPECT_EQ(result->GetValue(2), "35");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "15");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "25");
+    EXPECT_EQ(GetResultValue(result.get(), 2), "35");
 }
 
 TEST(Expressions, Sub_column_not_found) {
     SetBatchSize(2, 2);
 
     std::shared_ptr<Batch> batch = MakeBatch(2, {Type::Int64}, {"x"}, {{"1", "2"}});
-    SubExpression expr("missing", 1);
+    SumExpression expr("missing", -1);
     EXPECT_THROW(expr.Eval(batch), std::runtime_error);
 }
 
@@ -318,10 +349,10 @@ TEST(Expressions, And) {
     );
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 4u);
-    EXPECT_EQ(result->GetValue(0), "1");
-    EXPECT_EQ(result->GetValue(1), "0");
-    EXPECT_EQ(result->GetValue(2), "1");
-    EXPECT_EQ(result->GetValue(3), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 2), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 3), "0");
 }
 
 TEST(Expressions, Or) {
@@ -338,10 +369,10 @@ TEST(Expressions, Or) {
         std::make_shared<NotEqualExpression>("phrase", ""));
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 4u);
-    EXPECT_EQ(result->GetValue(0), "1");
-    EXPECT_EQ(result->GetValue(1), "0");
-    EXPECT_EQ(result->GetValue(2), "1");
-    EXPECT_EQ(result->GetValue(3), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "0");
+    EXPECT_EQ(GetResultValue(result.get(), 2), "1");
+    EXPECT_EQ(GetResultValue(result.get(), 3), "0");
 }
 
 TEST(Expressions, Length) {
@@ -356,9 +387,9 @@ TEST(Expressions, Length) {
     LengthExpression expr("url");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 3u);
-    EXPECT_EQ(result->GetValue(0), "5");
-    EXPECT_EQ(result->GetValue(1), "6");
-    EXPECT_EQ(result->GetValue(2), "2");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "5");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "6");
+    EXPECT_EQ(GetResultValue(result.get(), 2), "2");
 }
 
 TEST(Expressions, Length_column_not_found) {
@@ -381,9 +412,9 @@ TEST(Expressions, RegexpReplace) {
     RegexpReplaceExpression expr("ref", R"(^https?://(?:www\.)?([^/]+)/.*$)", "$1");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 3u);
-    EXPECT_EQ(result->GetValue(0), "google.com");
-    EXPECT_EQ(result->GetValue(1), "example.org");
-    EXPECT_EQ(result->GetValue(2), "test.com");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "google.com");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "example.org");
+    EXPECT_EQ(GetResultValue(result.get(), 2), "test.com");
 }
 
 TEST(Expressions, RegexpReplace_no_match) {
@@ -398,8 +429,8 @@ TEST(Expressions, RegexpReplace_no_match) {
     RegexpReplaceExpression expr("ref", R"(^https?://(?:www\.)?([^/]+)/.*$)", "$1");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 2u);
-    EXPECT_EQ(result->GetValue(0), "not_a_url");
-    EXPECT_EQ(result->GetValue(1), "also_not");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "not_a_url");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "also_not");
 }
 
 TEST(Expressions, RegexpReplace_column_not_found) {
@@ -422,9 +453,9 @@ TEST(Expressions, CaseWhen) {
     CaseWhenExpression expr(std::make_shared<EqualExpression>("x", "1"), "name", "unknown");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 3u);
-    EXPECT_EQ(result->GetValue(0), "alice");
-    EXPECT_EQ(result->GetValue(1), "unknown");
-    EXPECT_EQ(result->GetValue(2), "carol");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "alice");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "unknown");
+    EXPECT_EQ(GetResultValue(result.get(), 2), "carol");
 }
 
 TEST(Expressions, CaseWhen_column_not_found) {
@@ -447,8 +478,8 @@ TEST(Expressions, ExtractMinute) {
     ExtractMinuteExpression expr("ts");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 2u);
-    EXPECT_EQ(result->GetValue(0), "37");
-    EXPECT_EQ(result->GetValue(1), "2");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "37");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "2");
 }
 
 TEST(Expressions, ExtractMinute_column_not_found) {
@@ -471,8 +502,8 @@ TEST(Expressions, TruncateToMinute) {
     TruncateToMinuteExpression expr("ts");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 2u);
-    EXPECT_EQ(result->GetValue(0), "2021-01-01 00:37:00");
-    EXPECT_EQ(result->GetValue(1), "2021-01-01 01:02:00");
+    EXPECT_EQ(GetResultValue(result.get(), 0), "2021-01-01 00:37:00");
+    EXPECT_EQ(GetResultValue(result.get(), 1), "2021-01-01 01:02:00");
 }
 
 TEST(Expressions, TruncateToMinute_column_not_found) {

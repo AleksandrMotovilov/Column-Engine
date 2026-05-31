@@ -5,7 +5,7 @@
 #include <vector>
 #include "src/execution/aggregation_functions.h"
 #include "src/execution/operators.h"
-#include "src/objects.h"
+#include "src/kernel/batch.h"
 
 class GlobalAggregationOperator : public Operator {
 public:

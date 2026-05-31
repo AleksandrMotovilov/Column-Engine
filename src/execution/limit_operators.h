@@ -4,7 +4,7 @@
 #include <memory>
 #include <vector>
 #include "src/execution/operators.h"
-#include "src/objects.h"
+#include "src/kernel/batch.h"
 
 class LimitOperator : public Operator {
 public:

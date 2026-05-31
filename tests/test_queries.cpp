@@ -614,7 +614,7 @@ TEST(Test_Query, Q18) {
                                 std::vector<std::string>{"UserID", "EventTime", "SearchPhrase"}
                             ),
                             std::make_shared<ExtractMinuteExpression>("EventTime"),
-                            "m", Type::Int64
+                            "m"
                         ),
                         std::vector<std::string>{"UserID", "m", "SearchPhrase"},
                         []() {
@@ -785,7 +785,7 @@ TEST(Test_Query, Q23) {
                     std::make_shared<FilterOperator>(
                         std::make_shared<ScanOperator>(
                             input_clmn,
-                            std::vector<std::string>{"WatchID", "EventTime", "URL", "Title"}
+                            std::vector<std::string>{}, true
                         ),
                         std::make_shared<ContainsExpression>("URL", "google")
                     ),
@@ -1028,7 +1028,7 @@ TEST(Test_Query, Q34) {
                                 std::vector<std::string>{"URL"}
                             ),
                             std::make_shared<ConstantExpression>("1"),
-                            "1", Type::Int64
+                            "1"
                         ),
                         std::vector<std::string>{"1", "URL"},
                         []() {
@@ -1063,14 +1063,14 @@ TEST(Test_Query, Q35) {
                                         input_clmn,
                                         std::vector<std::string>{"ClientIP"}
                                     ),
-                                    std::make_shared<SubExpression>("ClientIP", 1LL),
-                                    "ClientIP - 1", Type::Int64
+                                    std::make_shared<SumExpression>("ClientIP", -1LL),
+                                    "ClientIP - 1"
                                 ),
-                                std::make_shared<SubExpression>("ClientIP", 2LL),
-                                "ClientIP - 2", Type::Int64
+                                std::make_shared<SumExpression>("ClientIP", -2LL),
+                                "ClientIP - 2"
                             ),
-                            std::make_shared<SubExpression>("ClientIP", 3LL),
-                            "ClientIP - 3", Type::Int64
+                            std::make_shared<SumExpression>("ClientIP", -3LL),
+                            "ClientIP - 3"
                         ),
                         std::vector<std::string>{"ClientIP", "ClientIP - 1", "ClientIP - 2", "ClientIP - 3"},
                         []() {
@@ -1266,7 +1266,7 @@ TEST(Test_Query, Q27) {
                                     std::make_shared<NotEqualExpression>("URL", "")
                                 ),
                                 std::make_shared<LengthExpression>("URL"),
-                                "strlen(URL)", Type::Int64
+                                "strlen(URL)"
                             ),
                             std::vector<std::string>{"CounterID"},
                             []() {
@@ -1317,10 +1317,10 @@ TEST(Test_Query, Q28) {
                                         R"(^https?://(?:www\.)?([^/]+)/.*$)",
                                         "$1"
                                     ),
-                                    "k", Type::String
+                                    "k"
                                 ),
                                 std::make_shared<LengthExpression>("Referer"),
-                                "strlen(Referer)", Type::Int64
+                                "strlen(Referer)"
                             ),
                             std::vector<std::string>{"k"},
                             []() {
@@ -1490,7 +1490,7 @@ TEST(Test_Query, Q39) {
                                     ),
                                     "Referer", ""
                                 ),
-                                "Src", Type::String
+                                "Src"
                             ),
                             std::vector<std::string>{
                                 "TraficSourceID", "SearchEngineID", "AdvEngineID", "Src", "URL"},
@@ -1690,8 +1690,7 @@ TEST(Test_Query, Q42) {
                                     )
                                 ),
                                 std::make_shared<TruncateToMinuteExpression>("EventTime"),
-                                "M",
-                                Type::Timestamp
+                                "M"
                             ),
                             std::vector<std::string>{"M"},
                             []() {

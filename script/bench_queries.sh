@@ -25,6 +25,9 @@ trap cleanup EXIT
 printf "%-6s  %10s\n" "Query" "Time (s)"
 printf "%-6s  %10s\n" "------" "----------"
 
+sum_ns=0
+count=0
+
 for ((q = 0; q < TOTAL_QUERIES; q++)); do
     padded="$(printf "%02d" "${q}")"
     log="${TEMP_DIR}/q${padded}.log"
@@ -33,9 +36,20 @@ for ((q = 0; q < TOTAL_QUERIES; q++)); do
     if "${BIN}" --input "${COLUMNAR}" --output_dir "${TEMP_DIR}" --queries="${q}" \
             > "${log}" 2>&1; then
         end_ns="$(date +%s%N)"
-        elapsed="$(echo "scale=3; (${end_ns} - ${start_ns}) / 1000000000" | bc)"
+        elapsed_ns=$(( end_ns - start_ns ))
+        elapsed="$(echo "scale=3; ${elapsed_ns} / 1000000000" | bc)"
         printf "Q%-5s  %10s\n" "${padded}" "${elapsed}"
+        sum_ns=$(( sum_ns + elapsed_ns ))
+        count=$(( count + 1 ))
     else
         printf "Q%-5s  %10s\n" "${padded}" "N/A"
     fi
 done
+
+printf "%-6s  %10s\n" "------" "----------"
+if [[ ${count} -gt 0 ]]; then
+    avg="$(echo "scale=3; ${sum_ns} / ${count} / 1000000000" | bc)"
+    printf "%-6s  %10s\n" "Avg" "${avg}"
+else
+    printf "%-6s  %10s\n" "Avg" "N/A"
+fi

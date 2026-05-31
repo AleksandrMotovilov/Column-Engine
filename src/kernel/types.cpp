@@ -1,77 +1,90 @@
-#pragma once
+#include "src/kernel/types.h"
 
-#include <chrono>
-#include <cstddef>
-#include <cstdio>
-#include <cstdint>
-#include <memory>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <vector>
-
-inline size_t kColumnBatchSize = 2;
-inline size_t kRowBatchSize = 2;
-
-void SetBatchSize(size_t column_batch_size, size_t row_batch_size);
-
-enum class Type : uint8_t {
-    Int16,
-    Int32,
-    Int64,
-    Int128,
-    Float,
-    Double,
-    Date,
-    Timestamp,
-    Char,
-    String,
-};
-
-class Date {
-public:
-    Date();
-    explicit Date(int32_t d);
-    int32_t days;
-};
-
-class Timestamp {
-public:
-    Timestamp();
-    explicit Timestamp(int64_t s);
-    int64_t seconds;
-};
-
-template<typename T>
-T FromString(std::string str) {
-    std::stringstream ss;
-    ss << str;
-    T value;
-    ss >> value;
-    return value;
+Date::Date() {
+    days_ = 0;
 }
 
-template<typename T>
-std::string ToString(T value) {
-    std::stringstream ss;
-    ss << value;
-    std::string str;
-    str = ss.str();
+Date::Date(int32_t d) {
+    days_ = d;
+}
+
+int32_t Date::GetValue() const {
+    return days_;
+}
+
+bool operator==(const Date& a, const Date& b) {
+    return a.GetValue() == b.GetValue();
+}
+
+bool operator!=(const Date& a, const Date& b) {
+    return a.GetValue() != b.GetValue();
+}
+
+bool operator<(const Date& a, const Date& b) {
+    return a.GetValue() < b.GetValue();
+}
+
+bool operator>(const Date& a, const Date& b) {
+    return a.GetValue() > b.GetValue();
+}
+
+bool operator<=(const Date& a, const Date& b) {
+    return a.GetValue() <= b.GetValue();
+}
+
+bool operator>=(const Date& a, const Date& b) {
+    return a.GetValue() >= b.GetValue();
+}
+
+Timestamp::Timestamp() {
+    seconds_ = 0;
+}
+
+Timestamp::Timestamp(int64_t s) {
+    seconds_ = s;
+}
+
+int64_t Timestamp::GetValue() const {
+    return seconds_;
+}
+
+bool operator==(const Timestamp& a, const Timestamp& b) {
+    return a.GetValue() == b.GetValue();
+}
+
+bool operator!=(const Timestamp& a, const Timestamp& b) {
+    return a.GetValue() != b.GetValue();
+}
+
+bool operator<(const Timestamp& a, const Timestamp& b) {
+    return a.GetValue() < b.GetValue();
+}
+
+bool operator>(const Timestamp& a, const Timestamp& b) {
+    return a.GetValue() > b.GetValue();
+}
+
+bool operator<=(const Timestamp& a, const Timestamp& b) {
+    return a.GetValue() <= b.GetValue();
+}
+
+bool operator>=(const Timestamp& a, const Timestamp& b) {
+    return a.GetValue() >= b.GetValue();
+}
+
+
+template<>
+std::string FromString<std::string>(std::string str) {
     return str;
 }
 
 template<>
-inline std::string FromString<std::string>(std::string str) {
-    return str;
-}
-
-template<>
-inline std::string ToString<std::string>(std::string value) {
+std::string ToString<std::string>(std::string value) {
     return value;
 }
 
 template<>
-inline Type FromString<Type>(std::string str) {
+Type FromString<Type>(std::string str) {
     if (str == "int16") {
         return Type::Int16;
     }
@@ -106,7 +119,7 @@ inline Type FromString<Type>(std::string str) {
 }
 
 template<>
-inline std::string ToString<Type>(Type value) {
+std::string ToString<Type>(Type value) {
     if (value == Type::Int16) {
         return "int16";
     }
@@ -141,7 +154,7 @@ inline std::string ToString<Type>(Type value) {
 }
 
 template<>
-inline Date FromString<Date>(std::string str) {
+Date FromString<Date>(std::string str) {
     using namespace std::chrono;
     int y, m, d;
     std::sscanf(str.c_str(), "%d-%d-%d", &y, &m, &d);
@@ -151,9 +164,9 @@ inline Date FromString<Date>(std::string str) {
 }
 
 template<>
-inline std::string ToString<Date>(Date value) {
+std::string ToString<Date>(Date value) {
     using namespace std::chrono;
-    year_month_day ymd = year_month_day{sys_days{days{value.days}}};
+    year_month_day ymd = year_month_day{sys_days{days{value.GetValue()}}};
     char buf[11];
     std::snprintf(buf, sizeof(buf), "%04d-%02u-%02u",
                   static_cast<int>(ymd.year()),
@@ -163,7 +176,7 @@ inline std::string ToString<Date>(Date value) {
 }
 
 template<>
-inline Timestamp FromString<Timestamp>(std::string str) {
+Timestamp FromString<Timestamp>(std::string str) {
     using namespace std::chrono;
     int y, mo, d, h, mi, s;
     std::sscanf(str.c_str(), "%d-%d-%d %d:%d:%d", &y, &mo, &d, &h, &mi, &s);
@@ -173,9 +186,9 @@ inline Timestamp FromString<Timestamp>(std::string str) {
 }
 
 template<>
-inline std::string ToString<Timestamp>(Timestamp value) {
+std::string ToString<Timestamp>(Timestamp value) {
     using namespace std::chrono;
-    sys_time<seconds> tp = sys_time<seconds>{seconds{value.seconds}};
+    sys_time<seconds> tp = sys_time<seconds>{seconds{value.GetValue()}};
     sys_days dp = floor<days>(tp);
     year_month_day ymd = year_month_day{dp};
     hh_mm_ss<seconds> hms = hh_mm_ss<seconds>{tp - dp};
@@ -190,48 +203,47 @@ inline std::string ToString<Timestamp>(Timestamp value) {
     return std::string(buf);
 }
 
-class Column {
-public:
-    virtual ~Column() = default;
-    virtual void SetValue(size_t index, std::string value) = 0;
-    virtual std::string GetValue(size_t index) const = 0;
-    virtual size_t GetSize() const = 0;
-};
+template<>
+Type TypeOf<int16_t>() {
+    return Type::Int16;
+}
 
-template<typename T>
-class ColumnTyped : public Column {
-public:
-    ColumnTyped(size_t size) {
-        column_ = std::vector<T>(size);
-    }
-    size_t GetSize() const override {
-        return column_.size();
-    }
-    void SetValue(size_t index, std::string value) override {
-        column_[index] = FromString<T>(value);
-    }
-    std::string GetValue(size_t index) const override {
-        return ToString<T>(column_[index]);
-    }
+template<>
+Type TypeOf<int32_t>() {
+    return Type::Int32;
+}
 
-private:
-    std::vector<T> column_;
-};
+template<>
+Type TypeOf<int64_t>() {
+    return Type::Int64;
+}
 
-class Batch {
-public:
-    Batch(size_t rows_number, size_t columns_number, std::vector<Type> types, std::vector<std::string> names);
-    size_t GetColumnsNumber() const;
-    size_t GetRowsNumber() const;
-    std::vector<Type> GetTypes() const;
-    std::vector<std::string> GetNames() const;
-    void SetValue(size_t row_index, size_t column_index, std::string value);
-    std::string GetValue(size_t row_index, size_t column_index) const;
+template<>
+Type TypeOf<float>() {
+    return Type::Float;
+}
 
-private:
-    size_t rows_number_;
-    std::vector<std::unique_ptr<Column>> columns_;
-    std::vector<std::string> names_;
-    std::vector<Type> types_;
-};
+template<>
+Type TypeOf<double>() {
+    return Type::Double;
+}
 
+template<>
+Type TypeOf<Date>() {
+    return Type::Date;
+}
+
+template<>
+Type TypeOf<Timestamp>() {
+    return Type::Timestamp;
+}
+
+template<>
+Type TypeOf<char>() {
+    return Type::Char;
+}
+
+template<>
+Type TypeOf<std::string>() {
+    return Type::String;
+}

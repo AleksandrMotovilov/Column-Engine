@@ -4,7 +4,7 @@
 #include <vector>
 #include "src/execution/expressions.h"
 #include "src/execution/operators.h"
-#include "src/objects.h"
+#include "src/kernel/batch.h"
 
 class FilterOperator : public Operator {
 public:
@@ -14,6 +14,4 @@ public:
 private:
     std::shared_ptr<Operator> next_;
     std::shared_ptr<Expression> predicate_;
-    bool mask_computed_;
-    std::shared_ptr<Column> mask_;
 };
