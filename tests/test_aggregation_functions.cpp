@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "src/execution/aggregation_functions.h"
-#include "src/column.h"
+#include "src/kernel/column_utils.h"
 
 std::shared_ptr<Batch> MakeBatch(
     size_t rows,
@@ -12,7 +12,7 @@ std::shared_ptr<Batch> MakeBatch(
     for (size_t j = 0; j < types.size(); j++) {
         cols.push_back(MakeColumnFromStrings(types[j], values[j]));
     }
-    return std::make_shared<Batch>(rows, std::move(names), std::move(types), std::move(cols));
+    return std::make_shared<Batch>(rows, std::make_shared<Schema>(std::move(names), std::move(types)), std::move(cols));
 }
 
 TEST(AggregationFunctions, CountRows) {

@@ -1,47 +1,45 @@
-#include "src/batch.h"
+#include "src/kernel/batch.h"
 
 void SetBatchSize(size_t column_batch_size, size_t row_batch_size) {
     kColumnBatchSize = column_batch_size;
     kRowBatchSize = row_batch_size;
 }
 
-Batch::Batch(size_t rows_number, std::vector<std::string> names, std::vector<Type> types, std::vector<std::shared_ptr<Column>> columns) {
-    if (types.size() != columns.size() || names.size() != columns.size()) {
+Batch::Batch(size_t rows_number, std::shared_ptr<Schema> schema, std::vector<std::shared_ptr<Column>> columns) {
+    if (schema->GetColumnsNumber() != columns.size()) {
         throw std::runtime_error("columns count mismatch :: Batch");
     }
     rows_number_ = rows_number;
-    names_ = std::move(names);
-    types_ = std::move(types);
+    schema_ = schema;
     columns_ = std::move(columns);
 }
 
 size_t Batch::GetColumnsNumber() const {
-    return columns_.size();
+    return schema_->GetColumnsNumber();
 }
 
 size_t Batch::GetRowsNumber() const {
     return rows_number_;
 }
 
-std::vector<Type> Batch::GetTypes() const {
-    return types_;
+const std::string& Batch::GetName(size_t index) const {
+    return schema_->GetName(index);
 }
 
-std::vector<std::string> Batch::GetNames() const {
-    return names_;
+Type Batch::GetType(size_t index) const {
+    return schema_->GetType(index);
 }
 
 size_t Batch::FindColumn(const std::string& name) const {
-    for (size_t i = 0; i < names_.size(); i++) {
-        if (names_[i] == name) {
-            return i;
-        }
-    }
-    return names_.size();
+    return schema_->FindColumn(name);
 }
 
 std::shared_ptr<Column> Batch::GetColumn(size_t index) const {
     return columns_[index];
+}
+
+std::shared_ptr<Schema> Batch::GetSchema() const {
+    return schema_;
 }
 
 std::vector<std::shared_ptr<Column>> Batch::MoveColumns() {

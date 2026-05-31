@@ -1,7 +1,7 @@
 #pragma once
 
 #include <memory>
-#include "src/batch.h"
+#include "src/kernel/batch.h"
 
 class Operator {
 public:

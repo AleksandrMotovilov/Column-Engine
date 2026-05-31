@@ -6,26 +6,32 @@
 
 ## Формат `.clmn`
 
-Файл состоит из **батчей** колонок и **футера**:
+Файл состоит из **батчей** колонок, **секции схемы** и **футера**:
 
 ```
 ┌─ батч 0 ──────────────────────────────────────────────────────┐
-│ metadata_offset : uint64_t   <- смещение до секции метаданных  │
-│ data_col_0      : raw bytes  <- данные первой колонки           │
+│ metadata_offset : size_t                                       │
+│ data_col_0      : raw bytes                                    │
 │ data_col_1      : raw bytes                                    │
 │ ...                                                            │
-│ ── секция метаданных ──────────────────────────────────────── │
-│ batch_size      : size_t     <- число колонок в батче           │
-│ offset_col_0    : uint64_t   <- смещение от начала батча        │
-│ type_col_0      : uint8_t    <- тип колонки (enum Type)         │
-│ name_len_0      : size_t                                       │
-│ name_0          : char[name_len_0]                             │
-│ ... (аналогично для каждой колонки батча)                      │
+│ ── метаданные батча ───────────────────────────────────────── │
+│ batch_rows      : size_t   <- число строк в батче              │
+│ offset_col_0    : size_t   <- смещение от начала батча         │
+│ offset_col_1    : size_t                                       │
+│ ...                                                            │
 └───────────────────────────────────────────────────────────────┘
 ┌─ батч 1 ─ ...
-┌─ футер ───────────────────────────────────────────────────────┐
-│ rows_number    : size_t      <- общее число строк в таблице     │
-│ columns_number : size_t      <- общее число колонок             │
+┌─ схема ────────────────────────────────────────────────────────┐
+│ для каждой колонки:                                            │
+│   type     : uint8_t                                           │
+│   name_len : size_t                                            │
+│   name     : char[name_len]                                    │
+└───────────────────────────────────────────────────────────────┘
+┌─ футер ────────────────────────────────────────────────────────┐
+│ rows_number    : size_t    <- общее число строк                 │
+│ columns_number : size_t    <- число колонок                     │
+│ batches_number : size_t    <- число батчей                      │
+│ schema_offset  : size_t    <- байт от конца файла до схемы     │
 └───────────────────────────────────────────────────────────────┘
 ```
 
@@ -104,16 +110,29 @@ Q21: N/A
 
 ```
 src/
-  types.h / types.cpp            — Type, Date и Timestamp, FromString/ToString
-  column.h / column.cpp          — Column, ColumnTyped<T>, GetStringValueAt, CopyRowsTyped,
-                                   MakeSingleValueColumn, MakeColumnFromStrings
-  batch.h / batch.cpp            — Batch, kColumnBatchSize, kRowBatchSize, SetBatchSize
-  convertion/                    — конвертеры .csv <-> .clmn
-  execution/                     — операторы запросов (Scan, Filter, Project, Agg, Sort, …)
+  kernel/
+    types.h / types.cpp              — Type, Date, Timestamp, FromString/ToString/TypeOf
+    column.h / column.cpp            — Column, ColumnTyped<T>
+    column_utils.h / column_utils.cpp — GetStringValueAt, CopyRowsTyped,
+                                        MakeSingleValueColumn, MakeColumnFromStrings,
+                                        CompareStringValues
+    schema.h / schema.cpp            — Schema
+    batch.h / batch.cpp              — Batch, kColumnBatchSize, kRowBatchSize, SetBatchSize
+    reader_writer_clmn.h / .cpp      — ReaderClmn, WriterClmn
+    reader_writer_csv.h / .cpp       — ReaderCsv, WriterCsv
+  convertion/
+    from_csv_to_clmn.h / .cpp        — Конвертер .csv → .clmn
+    from_clmn_to_csv.h / .cpp        — Конвертер .clmn → .csv
+  execution/
+    operators.h                      — базовый класс Operator
+    expressions.h / .cpp             — все Expression
+    aggregation_functions.h / .cpp   — все AggregationFunction
+    *_operators.h / .cpp             — Scan, Write, Filter, Project, GlobalAgg,
+                                       GroupByAgg, TopK, Sort, Limit
 exe/
-  convert.cpp                    — CLI: конвертация .csv -> .clmn
-  run_query.cpp                  — CLI: выполнение запроса по номеру
-tests/                           — GoogleTest
-clickbench/                      — датасет, схема, SQL-запросы, эталонные ответы
-script/                          — shell-скрипты для сборки, конвертации, проверки
+  convert.cpp                        — CLI: конвертация .csv → .clmn
+  run_query.cpp                      — CLI: выполнение запросов Q0–Q42
+tests/                               — GoogleTest (4 набора)
+clickbench/                          — датасет, схема, SQL-запросы, эталонные ответы
+script/                              — shell-скрипты для сборки, конвертации, проверки
 ```

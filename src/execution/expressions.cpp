@@ -10,10 +10,10 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
     if (index == batch->GetColumnsNumber()) {
         throw std::runtime_error("Column not found: " + column_name_ + " :: EqualExpression");
     }
-    Type col_type = batch->GetTypes()[index];
+    Type column_type = batch->GetType(index);
     size_t rows_number = batch->GetRowsNumber();
     std::vector<char> result(rows_number);
-    switch (col_type) {
+    switch (column_type) {
         case Type::Int16: {
             const std::vector<int16_t>& column_data = dynamic_cast<const ColumnTyped<int16_t>&>(*batch->GetColumn(index)).GetData();
             int16_t threshold = FromString<int16_t>(value_);
@@ -142,10 +142,10 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
     if (index == batch->GetColumnsNumber()) {
         throw std::runtime_error("Column not found: " + column_name_ + " :: NotEqualExpression");
     }
-    Type col_type = batch->GetTypes()[index];
+    Type column_type = batch->GetType(index);
     size_t rows_number = batch->GetRowsNumber();
     std::vector<char> result(rows_number);
-    switch (col_type) {
+    switch (column_type) {
         case Type::Int16: {
             const std::vector<int16_t>& column_data = dynamic_cast<const ColumnTyped<int16_t>&>(*batch->GetColumn(index)).GetData();
             int16_t threshold = FromString<int16_t>(value_);
@@ -274,10 +274,10 @@ std::shared_ptr<Column> GreaterOrEqualExpression::Eval(std::shared_ptr<Batch> ba
     if (index == batch->GetColumnsNumber()) {
         throw std::runtime_error("Column not found: " + column_name_ + " :: GreaterOrEqualExpression");
     }
-    Type col_type = batch->GetTypes()[index];
+    Type column_type = batch->GetType(index);
     size_t rows_number = batch->GetRowsNumber();
     std::vector<char> result(rows_number);
-    switch (col_type) {
+    switch (column_type) {
         case Type::Int16: {
             const std::vector<int16_t>& column_data = dynamic_cast<const ColumnTyped<int16_t>&>(*batch->GetColumn(index)).GetData();
             int16_t threshold = FromString<int16_t>(value_);
@@ -394,10 +394,10 @@ std::shared_ptr<Column> LessOrEqualExpression::Eval(std::shared_ptr<Batch> batch
     if (index == batch->GetColumnsNumber()) {
         throw std::runtime_error("Column not found: " + column_name_ + " :: LessOrEqualExpression");
     }
-    Type col_type = batch->GetTypes()[index];
+    Type column_type = batch->GetType(index);
     size_t rows_number = batch->GetRowsNumber();
     std::vector<char> result(rows_number);
-    switch (col_type) {
+    switch (column_type) {
         case Type::Int16: {
             const std::vector<int16_t>& column_data = dynamic_cast<const ColumnTyped<int16_t>&>(*batch->GetColumn(index)).GetData();
             int16_t threshold = FromString<int16_t>(value_);
@@ -590,10 +590,10 @@ OrExpression::OrExpression(std::shared_ptr<Expression> left, std::shared_ptr<Exp
 }
 
 std::shared_ptr<Column> OrExpression::Eval(std::shared_ptr<Batch> batch) const {
-    std::shared_ptr<Column> left_col = left_->Eval(batch);
-    std::shared_ptr<Column> right_col = right_->Eval(batch);
-    const std::vector<char>& left_data = dynamic_cast<const ColumnTyped<char>&>(*left_col).GetData();
-    const std::vector<char>& right_data = dynamic_cast<const ColumnTyped<char>&>(*right_col).GetData();
+    std::shared_ptr<Column> left_column = left_->Eval(batch);
+    std::shared_ptr<Column> right_column = right_->Eval(batch);
+    const std::vector<char>& left_data = dynamic_cast<const ColumnTyped<char>&>(*left_column).GetData();
+    const std::vector<char>& right_data = dynamic_cast<const ColumnTyped<char>&>(*right_column).GetData();
     size_t rows_number = batch->GetRowsNumber();
     std::vector<char> result(rows_number);
     for (size_t i = 0; i < rows_number; i++) {
@@ -634,10 +634,10 @@ std::shared_ptr<Column> SumExpression::Eval(std::shared_ptr<Batch> batch) const 
     if (index == batch->GetColumnsNumber()) {
         throw std::runtime_error("Column not found: " + column_name_ + " :: SumExpression");
     }
-    Type col_type = batch->GetTypes()[index];
+    Type column_type = batch->GetType(index);
     size_t rows_number = batch->GetRowsNumber();
     std::vector<int64_t> result(rows_number);
-    switch (col_type) {
+    switch (column_type) {
         case Type::Int16: {
             const std::vector<int16_t>& column_data = dynamic_cast<const ColumnTyped<int16_t>&>(*batch->GetColumn(index)).GetData();
             for (size_t i = 0; i < rows_number; i++) {

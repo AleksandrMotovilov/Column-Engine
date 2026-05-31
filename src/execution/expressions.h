@@ -4,7 +4,7 @@
 #include <regex>
 #include <stdexcept>
 #include <string>
-#include "src/batch.h"
+#include "src/kernel/batch.h"
 
 class Expression {
 public:

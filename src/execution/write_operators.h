@@ -1,11 +1,9 @@
 #pragma once
 
-#include <fstream>
 #include <memory>
-#include <stdexcept>
-#include <vector>
+#include <string>
 #include "src/execution/operators.h"
-#include "src/batch.h"
+#include "src/kernel/reader_writer_clmn.h"
 
 class WriteOperator : public Operator {
 public:
@@ -13,6 +11,7 @@ public:
     std::shared_ptr<Batch> Next() override;
 
 private:
-    std::ofstream fout_;
     std::shared_ptr<Operator> next_;
+    std::unique_ptr<WriterClmn> writer_;
+    bool done_;
 };

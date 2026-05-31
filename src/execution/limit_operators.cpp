@@ -1,5 +1,5 @@
 #include "src/execution/limit_operators.h"
-#include "src/column.h"
+#include "src/kernel/column_utils.h"
 
 LimitOperator::LimitOperator(std::shared_ptr<Operator> next, size_t limit) {
     next_ = std::move(next);
@@ -17,14 +17,13 @@ std::shared_ptr<Batch> LimitOperator::Next() {
     }
     std::vector<size_t> indices(rows);
     std::iota(indices.begin(), indices.end(), 0);
-    std::vector<Type> columns_types = batch->GetTypes();
-    std::vector<std::string> columns_names = batch->GetNames();
-    size_t columns_number = batch->GetColumnsNumber();
+    std::shared_ptr<Schema> schema = batch->GetSchema();
+    size_t columns_number = schema->GetColumnsNumber();
     std::vector<std::shared_ptr<Column>> columns;
     for (size_t i = 0; i < columns_number; i++) {
-        columns.push_back(CopyRowsTyped(batch->GetColumn(i), columns_types[i], indices));
+        columns.push_back(CopyRowsTyped(batch->GetColumn(i), schema->GetType(i), indices));
     }
-    return std::make_shared<Batch>(rows, std::move(columns_names), std::move(columns_types), std::move(columns));
+    return std::make_shared<Batch>(rows, schema, std::move(columns));
 }
 
 OffsetOperator::OffsetOperator(std::shared_ptr<Operator> next, size_t offset) {
@@ -45,12 +44,11 @@ std::shared_ptr<Batch> OffsetOperator::Next() {
     }
     std::vector<size_t> indices(rows);
     std::iota(indices.begin(), indices.end(), start);
-    std::vector<Type> columns_types = batch->GetTypes();
-    std::vector<std::string> columns_names = batch->GetNames();
-    size_t columns_number = batch->GetColumnsNumber();
+    std::shared_ptr<Schema> schema = batch->GetSchema();
+    size_t columns_number = schema->GetColumnsNumber();
     std::vector<std::shared_ptr<Column>> columns;
     for (size_t i = 0; i < columns_number; i++) {
-        columns.push_back(CopyRowsTyped(batch->GetColumn(i), columns_types[i], indices));
+        columns.push_back(CopyRowsTyped(batch->GetColumn(i), schema->GetType(i), indices));
     }
-    return std::make_shared<Batch>(rows, std::move(columns_names), std::move(columns_types), std::move(columns));
+    return std::make_shared<Batch>(rows, schema, std::move(columns));
 }

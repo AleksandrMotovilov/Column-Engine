@@ -785,7 +785,7 @@ TEST(Test_Query, Q23) {
                     std::make_shared<FilterOperator>(
                         std::make_shared<ScanOperator>(
                             input_clmn,
-                            std::vector<std::string>{"WatchID", "EventTime", "URL", "Title"}
+                            std::vector<std::string>{}, true
                         ),
                         std::make_shared<ContainsExpression>("URL", "google")
                     ),

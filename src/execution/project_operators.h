@@ -5,7 +5,7 @@
 #include <vector>
 #include "src/execution/expressions.h"
 #include "src/execution/operators.h"
-#include "src/batch.h"
+#include "src/kernel/batch.h"
 
 class ProjectOperator : public Operator {
 public:
@@ -16,5 +16,4 @@ private:
     std::shared_ptr<Operator> next_;
     std::shared_ptr<Expression> expr_;
     std::string column_name_;
-    bool expr_evaluated_;
 };
