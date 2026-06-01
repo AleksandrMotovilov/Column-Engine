@@ -1064,7 +1064,7 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
 }
 
 int main(int argc, char** argv) {
-    SetBatchSize(1000, 1000);
+    SetBatchSize(50000, 50000);
 
     std::string input_clmn;
     std::string output_dir;

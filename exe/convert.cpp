@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    SetBatchSize(1000, 1000);
+    SetBatchSize(50000, 50000);
     ConvertFromCsvToClmn(input_csv, schema, output_clmn);
     return 0;
 }
