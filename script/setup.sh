@@ -19,4 +19,4 @@ echo "deb [signed-by=/usr/share/keyrings/kitware.gpg] https://apt.kitware.com/ub
     > /etc/apt/sources.list.d/kitware.list
 
 apt-get update
-apt-get install -y --no-install-recommends clang-20 cmake
+apt-get install -y --no-install-recommends clang-20 cmake liblz4-dev

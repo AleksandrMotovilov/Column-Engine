@@ -9,6 +9,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CAMKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-unused-parameter -Wno-unused-function -Wpedantic")
 
 option(BUILD_TESTS "Build tests" ON)
+option(ENABLE_RLE "Enable RLE encoding for columns" ON)
+option(ENABLE_DELTA "Enable Delta encoding for integer columns" ON)
+option(ENABLE_DICT "Enable Dictionary encoding for string columns" ON)
+option(ENABLE_LZ4 "Enable LZ4 block compression" ON)
 
 include(FetchContent)
 

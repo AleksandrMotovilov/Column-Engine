@@ -1,9 +1,9 @@
 #include "src/execution/write_operators.h"
 
-WriteOperator::WriteOperator(const std::string& file_clmn, std::shared_ptr<Operator> next) {
+WriteOperator::WriteOperator(const std::string& file_csv, const std::string& file_schema, std::shared_ptr<Operator> next) {
     next_ = std::move(next);
     done_ = false;
-    writer_ = std::make_unique<WriterClmn>(file_clmn);
+    writer_ = std::make_unique<WriterCsv>(file_csv, file_schema);
 }
 
 std::shared_ptr<Batch> WriteOperator::Next() {

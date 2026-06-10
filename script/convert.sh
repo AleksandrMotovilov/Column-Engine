@@ -1,8 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Compression flags — edit here to change encoding used in the output .clmn file.
+# After changing, the script rebuilds csv_to_clmn automatically before converting.
+ENABLE_RLE=ON
+ENABLE_DELTA=ON
+ENABLE_DICT=ON
+ENABLE_LZ4=ON
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-BIN="${ROOT_DIR}/build/exe/csv_to_clmn"
+BUILD_DIR="${ROOT_DIR}/build"
+BIN="${BUILD_DIR}/exe/csv_to_clmn"
 
 usage() {
     echo "Usage: script/convert.sh <input_csv> <output_columnar> [input_schema]" >&2
@@ -18,11 +26,19 @@ INPUT_CSV="$1"
 OUTPUT_CLMN="$2"
 INPUT_SCHEMA="${3:-${ROOT_DIR}/clickbench/hits.schema}"
 
-if [[ ! -x "${BIN}" ]]; then
-    echo "ERROR: csv_to_clmn not found at ${BIN}" >&2
-    echo "Run script/build.sh first" >&2
-    exit 1
-fi
+export CC="${CC:-clang-20}"
+export CXX="${CXX:-clang++-20}"
+
+cmake -S "${ROOT_DIR}" -B "${BUILD_DIR}" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_TESTS=OFF \
+    -DENABLE_RLE="${ENABLE_RLE}" \
+    -DENABLE_DELTA="${ENABLE_DELTA}" \
+    -DENABLE_DICT="${ENABLE_DICT}" \
+    -DENABLE_LZ4="${ENABLE_LZ4}" \
+    > /dev/null 2>&1
+
+cmake --build "${BUILD_DIR}" --target csv_to_clmn -j "$(nproc)" > /dev/null 2>&1
 
 if [[ ! -f "${INPUT_CSV}" ]]; then
     echo "ERROR: input CSV not found: ${INPUT_CSV}" >&2

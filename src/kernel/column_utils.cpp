@@ -28,85 +28,85 @@ std::string GetStringValueAt(std::shared_ptr<Column> column, Type column_type, s
 std::shared_ptr<Column> CopyRowsTyped(std::shared_ptr<Column> column, Type column_type, const std::vector<size_t>& indices) {
     switch (column_type) {
         case Type::Int16: {
-            const std::vector<int16_t>& column_data = dynamic_cast<const ColumnTyped<int16_t>&>(*column).GetData();
-            std::vector<int16_t> result;
-            result.reserve(indices.size());
+            const std::vector<int16_t>& raw = dynamic_cast<const ColumnTyped<int16_t>&>(*column).GetData();
+            std::vector<int16_t> column_data;
+            column_data.reserve(indices.size());
             for (size_t i : indices) {
-                result.push_back(column_data[i]);
+                column_data.push_back(raw[i]);
             }
-            return std::make_shared<ColumnTyped<int16_t>>(std::move(result));
+            return std::make_shared<ColumnTyped<int16_t>>(std::move(column_data));
         }
         case Type::Int32: {
-            const std::vector<int32_t>& column_data = dynamic_cast<const ColumnTyped<int32_t>&>(*column).GetData();
-            std::vector<int32_t> result;
-            result.reserve(indices.size());
+            const std::vector<int32_t>& raw = dynamic_cast<const ColumnTyped<int32_t>&>(*column).GetData();
+            std::vector<int32_t> column_data;
+            column_data.reserve(indices.size());
             for (size_t i : indices) {
-                result.push_back(column_data[i]);
+                column_data.push_back(raw[i]);
             }
-            return std::make_shared<ColumnTyped<int32_t>>(std::move(result));
+            return std::make_shared<ColumnTyped<int32_t>>(std::move(column_data));
         }
         case Type::Int64: {
-            const std::vector<int64_t>& column_data = dynamic_cast<const ColumnTyped<int64_t>&>(*column).GetData();
-            std::vector<int64_t> result;
-            result.reserve(indices.size());
+            const std::vector<int64_t>& raw = dynamic_cast<const ColumnTyped<int64_t>&>(*column).GetData();
+            std::vector<int64_t> column_data;
+            column_data.reserve(indices.size());
             for (size_t i : indices) {
-                result.push_back(column_data[i]);
+                column_data.push_back(raw[i]);
             }
-            return std::make_shared<ColumnTyped<int64_t>>(std::move(result));
+            return std::make_shared<ColumnTyped<int64_t>>(std::move(column_data));
         }
         case Type::Float: {
-            const std::vector<float>& column_data = dynamic_cast<const ColumnTyped<float>&>(*column).GetData();
-            std::vector<float> result;
-            result.reserve(indices.size());
+            const std::vector<float>& raw = dynamic_cast<const ColumnTyped<float>&>(*column).GetData();
+            std::vector<float> column_data;
+            column_data.reserve(indices.size());
             for (size_t i : indices) {
-                result.push_back(column_data[i]);
+                column_data.push_back(raw[i]);
             }
-            return std::make_shared<ColumnTyped<float>>(std::move(result));
+            return std::make_shared<ColumnTyped<float>>(std::move(column_data));
         }
         case Type::Double: {
-            const std::vector<double>& column_data = dynamic_cast<const ColumnTyped<double>&>(*column).GetData();
-            std::vector<double> result;
-            result.reserve(indices.size());
+            const std::vector<double>& raw = dynamic_cast<const ColumnTyped<double>&>(*column).GetData();
+            std::vector<double> column_data;
+            column_data.reserve(indices.size());
             for (size_t i : indices) {
-                result.push_back(column_data[i]);
+                column_data.push_back(raw[i]);
             }
-            return std::make_shared<ColumnTyped<double>>(std::move(result));
+            return std::make_shared<ColumnTyped<double>>(std::move(column_data));
         }
         case Type::Date: {
-            const std::vector<Date>& column_data = dynamic_cast<const ColumnTyped<Date>&>(*column).GetData();
-            std::vector<Date> result;
-            result.reserve(indices.size());
+            const std::vector<Date>& raw = dynamic_cast<const ColumnTyped<Date>&>(*column).GetData();
+            std::vector<Date> column_data;
+            column_data.reserve(indices.size());
             for (size_t i : indices) {
-                result.push_back(column_data[i]);
+                column_data.push_back(raw[i]);
             }
-            return std::make_shared<ColumnTyped<Date>>(std::move(result));
+            return std::make_shared<ColumnTyped<Date>>(std::move(column_data));
         }
         case Type::Timestamp: {
-            const std::vector<Timestamp>& column_data = dynamic_cast<const ColumnTyped<Timestamp>&>(*column).GetData();
-            std::vector<Timestamp> result;
-            result.reserve(indices.size());
+            const std::vector<Timestamp>& raw = dynamic_cast<const ColumnTyped<Timestamp>&>(*column).GetData();
+            std::vector<Timestamp> column_data;
+            column_data.reserve(indices.size());
             for (size_t i : indices) {
-                result.push_back(column_data[i]);
+                column_data.push_back(raw[i]);
             }
-            return std::make_shared<ColumnTyped<Timestamp>>(std::move(result));
+            return std::make_shared<ColumnTyped<Timestamp>>(std::move(column_data));
         }
         case Type::Char: {
-            const std::vector<char>& column_data = dynamic_cast<const ColumnTyped<char>&>(*column).GetData();
-            std::vector<char> result;
-            result.reserve(indices.size());
+            const std::vector<char>& raw = dynamic_cast<const ColumnTyped<char>&>(*column).GetData();
+            std::vector<char> column_data;
+            column_data.reserve(indices.size());
             for (size_t i : indices) {
-                result.push_back(column_data[i]);
+                column_data.push_back(raw[i]);
             }
-            return std::make_shared<ColumnTyped<char>>(std::move(result));
+            return std::make_shared<ColumnTyped<char>>(std::move(column_data));
         }
         case Type::String: {
-            const std::vector<std::string>& column_data = dynamic_cast<const ColumnTyped<std::string>&>(*column).GetData();
-            std::vector<std::string> result;
-            result.reserve(indices.size());
+            const std::vector<std::string>& raw = dynamic_cast<const ColumnTyped<std::string>&>(*column).GetData();
+            std::vector<std::string> column_data;
+            column_data.reserve(indices.size());
             for (size_t i : indices) {
-                result.push_back(column_data[i]);
+                column_data.push_back(raw[i]);
             }
-            return std::make_shared<ColumnTyped<std::string>>(std::move(result));
+            return std::make_shared<ColumnTyped<std::string>>(std::move(column_data));
         }
         default:
             throw std::runtime_error("Unsupported type :: CopyRowsTyped");
@@ -160,72 +160,72 @@ std::shared_ptr<Column> MakeColumnFromStrings(Type column_type, const std::vecto
     size_t rows_number = strs.size();
     switch (column_type) {
         case Type::Int16: {
-            std::vector<int16_t> column;
-            column.reserve(rows_number);
+            std::vector<int16_t> column_data;
+            column_data.reserve(rows_number);
             for (const std::string& s : strs) {
-                column.push_back(FromString<int16_t>(s));
+                column_data.push_back(FromString<int16_t>(s));
             }
-            return std::make_shared<ColumnTyped<int16_t>>(std::move(column));
+            return std::make_shared<ColumnTyped<int16_t>>(std::move(column_data));
         }
         case Type::Int32: {
-            std::vector<int32_t> column;
-            column.reserve(rows_number);
+            std::vector<int32_t> column_data;
+            column_data.reserve(rows_number);
             for (const std::string& s : strs) {
-                column.push_back(FromString<int32_t>(s));
+                column_data.push_back(FromString<int32_t>(s));
             }
-            return std::make_shared<ColumnTyped<int32_t>>(std::move(column));
+            return std::make_shared<ColumnTyped<int32_t>>(std::move(column_data));
         }
         case Type::Int64: {
-            std::vector<int64_t> column;
-            column.reserve(rows_number);
+            std::vector<int64_t> column_data;
+            column_data.reserve(rows_number);
             for (const std::string& s : strs) {
-                column.push_back(FromString<int64_t>(s));
+                column_data.push_back(FromString<int64_t>(s));
             }
-            return std::make_shared<ColumnTyped<int64_t>>(std::move(column));
+            return std::make_shared<ColumnTyped<int64_t>>(std::move(column_data));
         }
         case Type::Float: {
-            std::vector<float> column;
-            column.reserve(rows_number);
+            std::vector<float> column_data;
+            column_data.reserve(rows_number);
             for (const std::string& s : strs) {
-                column.push_back(FromString<float>(s));
+                column_data.push_back(FromString<float>(s));
             }
-            return std::make_shared<ColumnTyped<float>>(std::move(column));
+            return std::make_shared<ColumnTyped<float>>(std::move(column_data));
         }
         case Type::Double: {
-            std::vector<double> column;
-            column.reserve(rows_number);
+            std::vector<double> column_data;
+            column_data.reserve(rows_number);
             for (const std::string& s : strs) {
-                column.push_back(FromString<double>(s));
+                column_data.push_back(FromString<double>(s));
             }
-            return std::make_shared<ColumnTyped<double>>(std::move(column));
+            return std::make_shared<ColumnTyped<double>>(std::move(column_data));
         }
         case Type::Date: {
-            std::vector<Date> column;
-            column.reserve(rows_number);
+            std::vector<Date> column_data;
+            column_data.reserve(rows_number);
             for (const std::string& s : strs) {
-                column.push_back(FromString<Date>(s));
+                column_data.push_back(FromString<Date>(s));
             }
-            return std::make_shared<ColumnTyped<Date>>(std::move(column));
+            return std::make_shared<ColumnTyped<Date>>(std::move(column_data));
         }
         case Type::Timestamp: {
-            std::vector<Timestamp> column;
-            column.reserve(rows_number);
+            std::vector<Timestamp> column_data;
+            column_data.reserve(rows_number);
             for (const std::string& s : strs) {
-                column.push_back(FromString<Timestamp>(s));
+                column_data.push_back(FromString<Timestamp>(s));
             }
-            return std::make_shared<ColumnTyped<Timestamp>>(std::move(column));
+            return std::make_shared<ColumnTyped<Timestamp>>(std::move(column_data));
         }
         case Type::Char: {
-            std::vector<char> column;
-            column.reserve(rows_number);
+            std::vector<char> column_data;
+            column_data.reserve(rows_number);
             for (const std::string& s : strs) {
-                column.push_back(FromString<char>(s));
+                column_data.push_back(FromString<char>(s));
             }
-            return std::make_shared<ColumnTyped<char>>(std::move(column));
+            return std::make_shared<ColumnTyped<char>>(std::move(column_data));
         }
         case Type::String: {
-            std::vector<std::string> column = strs;
-            return std::make_shared<ColumnTyped<std::string>>(std::move(column));
+            std::vector<std::string> column_data = strs;
+            return std::make_shared<ColumnTyped<std::string>>(std::move(column_data));
         }
         default:
             throw std::runtime_error("Unsupported type :: MakeColumnFromStrings");

@@ -29,7 +29,8 @@ static void RunQuery(
     const std::string& schema,
     const std::function<std::shared_ptr<Operator>(
         const std::string& input_clmn,
-        const std::string& result_clmn)>& build_plan,
+        const std::string& result_csv,
+        const std::string& result_schema)>& build_plan,
     const std::string& expected,
     size_t column_batch_size = 2
 ) {
@@ -54,10 +55,8 @@ static void RunQuery(
     std::string file_result_schema = test_dir + "/result_schema.csv";
     std::string file_result_csv = test_dir + "/result.csv";
 
-    std::shared_ptr<Operator> plan = build_plan(file_clmn, file_result_clmn);
+    std::shared_ptr<Operator> plan = build_plan(file_clmn, file_result_csv, file_result_schema);
     plan->Next();
-
-    ConvertFromClmnToCsv(file_result_clmn, file_result_schema, file_result_csv);
 
     std::string file_expected = test_dir + "/expected.csv";
     std::ofstream f_expected(file_expected);
@@ -73,9 +72,10 @@ TEST(Test_Query, Q0) {
         "test_q0",
         "1,2\n3,4\n5,6\n",
         "a,int64\nb,int64",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<GlobalAggregationOperator>(
                     std::make_shared<ScanOperator>(
                         input_clmn,
@@ -97,9 +97,10 @@ TEST(Test_Query, Q1) {
         "test_q1",
         "0,1\n3,4\n5,6\n",
         "AdvEngineID,int16\nOtherCol,int64",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<GlobalAggregationOperator>(
                     std::make_shared<FilterOperator>(
                         std::make_shared<ScanOperator>(
@@ -124,9 +125,10 @@ TEST(Test_Query, Q2) {
         "test_q2",
         "1,10\n2,20\n3,30\n",
         "AdvEngineID,int16\nResolutionWidth,int16",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<GlobalAggregationOperator>(
                     std::make_shared<ScanOperator>(
                         input_clmn,
@@ -150,9 +152,10 @@ TEST(Test_Query, Q3) {
         "test_q3",
         "100\n200\n300\n",
         "UserID,int64",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<GlobalAggregationOperator>(
                     std::make_shared<ScanOperator>(
                         input_clmn,
@@ -174,9 +177,10 @@ TEST(Test_Query, Q4) {
         "test_q4",
         "100\n200\n100\n300\n",
         "UserID,int64",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<GlobalAggregationOperator>(
                     std::make_shared<ScanOperator>(
                         input_clmn,
@@ -198,9 +202,10 @@ TEST(Test_Query, Q5) {
         "test_q5",
         "hello\ngoogle\nhello\n",
         "SearchPhrase,string",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<GlobalAggregationOperator>(
                     std::make_shared<ScanOperator>(
                         input_clmn,
@@ -222,9 +227,10 @@ TEST(Test_Query, Q6) {
         "test_q6",
         "2013-07-01\n2013-07-15\n2013-07-31\n",
         "EventDate,date",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<GlobalAggregationOperator>(
                     std::make_shared<ScanOperator>(
                         input_clmn,
@@ -247,9 +253,10 @@ TEST(Test_Query, Q7) {
         "test_q7",
         "0\n1\n2\n1\n2\n2\n",
         "AdvEngineID,int16",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<SortOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -280,9 +287,10 @@ TEST(Test_Query, Q8) {
         "test_q8",
         "1,10\n2,20\n2,30\n3,40\n3,50\n3,60\n",
         "RegionID,int32\nUserID,int64",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ScanOperator>(
@@ -310,9 +318,10 @@ TEST(Test_Query, Q9) {
         "test_q9",
         "1,5,100,10\n2,3,200,20\n2,7,400,30\n",
         "RegionID,int32\nAdvEngineID,int16\nResolutionWidth,int16\nUserID,int64",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ScanOperator>(
@@ -343,9 +352,10 @@ TEST(Test_Query, Q10) {
         "test_q10",
         ",10\niPhone,20\nGalaxy,30\niPhone,40\niPhone,20\n",
         "MobilePhoneModel,string\nUserID,int64",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -376,9 +386,10 @@ TEST(Test_Query, Q11) {
         "test_q11",
         "1,,10\n1,iPhone,20\n2,Galaxy,30\n1,iPhone,40\n1,iPhone,20\n",
         "MobilePhone,int32\nMobilePhoneModel,string\nUserID,int64",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -409,9 +420,10 @@ TEST(Test_Query, Q12) {
         "test_q12",
         "google\nbing\ngoogle\nbing\ngoogle\n\n",
         "SearchPhrase,string",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -442,9 +454,10 @@ TEST(Test_Query, Q13) {
         "test_q13",
         ",99\ngoogle,10\nbing,30\ngoogle,20\ngoogle,10\n",
         "SearchPhrase,string\nUserID,int64",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -475,9 +488,10 @@ TEST(Test_Query, Q14) {
         "test_q14",
         "1,google\n2,bing\n1,google\n1,google\n2,bing\n0,\n1,bing\n",
         "SearchEngineID,int16\nSearchPhrase,string",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -508,9 +522,10 @@ TEST(Test_Query, Q15) {
         "test_q15",
         "1\n2\n1\n3\n1\n2\n",
         "UserID,int64",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ScanOperator>(
@@ -538,9 +553,10 @@ TEST(Test_Query, Q16) {
         "test_q16",
         "2,bing\n1,google\n1,google\n1,bing\n1,google\n1,bing\n",
         "UserID,int64\nSearchPhrase,string",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ScanOperator>(
@@ -568,9 +584,10 @@ TEST(Test_Query, Q17) {
         "test_q17",
         "2,bing\n1,google\n1,google\n1,bing\n1,google\n1,bing\n",
         "UserID,int64\nSearchPhrase,string",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<LimitOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ScanOperator>(
@@ -603,9 +620,10 @@ TEST(Test_Query, Q18) {
         "2,2023-01-01 10:10:30,bing\n"
         "3,2023-01-01 10:15:00,google\n",
         "UserID,int64\nEventTime,timestamp\nSearchPhrase,string",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ProjectOperator>(
@@ -637,9 +655,10 @@ TEST(Test_Query, Q19) {
         "test_q19",
         "100\n200\n100\n300\n",
         "UserID,int64",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<FilterOperator>(
                     std::make_shared<ScanOperator>(
                         input_clmn,
@@ -659,9 +678,10 @@ TEST(Test_Query, Q20) {
         "test_q20",
         "http://google.com\nhttps://bing.com\nhttps://www.google.com/search\n",
         "URL,string",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<GlobalAggregationOperator>(
                     std::make_shared<FilterOperator>(
                         std::make_shared<ScanOperator>(
@@ -689,9 +709,10 @@ TEST(Test_Query, Q21) {
         "http://google.com/maps,maps\n"
         "http://google.com,google\n",
         "URL,string\nSearchPhrase,string",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -730,9 +751,10 @@ TEST(Test_Query, Q22) {
         "Google Search,http://docs.google.com/,hello,10\n"
         "Google News,http://news.example.com,news,30\n",
         "Title,string\nURL,string\nSearchPhrase,string\nUserID,int64",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -778,9 +800,10 @@ TEST(Test_Query, Q23) {
         "40,2021-01-01 00:07:00,http://yahoo.com,Yahoo\n"
         "50,2021-01-01 00:02:00,http://google.ru,RuGoogle\n",
         "WatchID,int64\nEventTime,timestamp\nURL,string\nTitle,string",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<FilterOperator>(
                         std::make_shared<ScanOperator>(
@@ -810,9 +833,10 @@ TEST(Test_Query, Q24) {
         "banana,2021-01-01 00:02:00\n"
         "cherry,2021-01-01 00:04:00\n",
         "SearchPhrase,string\nEventTime,timestamp",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<FilterOperator>(
                         std::make_shared<ScanOperator>(
@@ -837,9 +861,10 @@ TEST(Test_Query, Q25) {
         "test_q25",
         "apple\nbanana\n\ncherry\napple\n",
         "SearchPhrase,string",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<FilterOperator>(
                         std::make_shared<ScanOperator>(
@@ -868,9 +893,10 @@ TEST(Test_Query, Q30) {
         "bing,2,2,0,300\n"
         "bing,2,2,1,350\n",
         "SearchPhrase,string\nSearchEngineID,int32\nClientIP,int64\nIsRefresh,int16\nResolutionWidth,int16",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -910,9 +936,10 @@ TEST(Test_Query, Q31) {
         "bing,10,1,0,300\n"
         "google,20,2,1,150\n",
         "SearchPhrase,string\nWatchID,int64\nClientIP,int64\nIsRefresh,int16\nResolutionWidth,int16",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -952,9 +979,10 @@ TEST(Test_Query, Q32) {
         "20,2,0,500\n"
         "10,2,1,600\n",
         "WatchID,int64\nClientIP,int64\nIsRefresh,int16\nResolutionWidth,int16",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ScanOperator>(
@@ -987,9 +1015,10 @@ TEST(Test_Query, Q33) {
         "test_q33",
         "http://google.com\nhttp://bing.com\nhttp://google.com\nhttp://bing.com\nhttp://google.com\n",
         "URL,string",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ScanOperator>(
@@ -1017,9 +1046,10 @@ TEST(Test_Query, Q34) {
         "test_q34",
         "http://google.com\nhttp://bing.com\nhttp://google.com\nhttp://bing.com\nhttp://google.com\n",
         "URL,string",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ProjectOperator>(
@@ -1051,9 +1081,10 @@ TEST(Test_Query, Q35) {
         "test_q35",
         "100\n200\n100\n200\n200\n",
         "ClientIP,int64",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ProjectOperator>(
@@ -1099,9 +1130,10 @@ TEST(Test_Query, Q36) {
         "62,2013-07-10,0,0,\n"
         "62,2013-07-10,0,0,http://another.com\n",
         "CounterID,int32\nEventDate,date\nDontCountHits,int16\nIsRefresh,int16\nURL,string",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -1158,9 +1190,10 @@ TEST(Test_Query, Q37) {
         "62,2013-07-10,0,0,\n"
         "62,2013-07-10,0,0,About\n",
         "CounterID,int32\nEventDate,date\nDontCountHits,int16\nIsRefresh,int16\nTitle,string",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -1215,9 +1248,10 @@ TEST(Test_Query, Q26) {
         "cherry,2021-01-01 00:01:00\n"
         "date,2021-01-01 00:01:00\n",
         "SearchPhrase,string\nEventTime,timestamp",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<FilterOperator>(
                         std::make_shared<ScanOperator>(
@@ -1251,9 +1285,10 @@ TEST(Test_Query, Q27) {
         "3,a\n"
         "3,abc\n",
         "CounterID,int32\nURL,string",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<FilterOperator>(
                         std::make_shared<GroupByAggregationOperator>(
@@ -1297,9 +1332,10 @@ TEST(Test_Query, Q28) {
         "https://example.org/page/2\n"
         "http://test.com/something\n",
         "Referer,string",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<FilterOperator>(
                         std::make_shared<GroupByAggregationOperator>(
@@ -1358,14 +1394,15 @@ TEST(Test_Query, Q29) {
         "test_q29",
         "1280\n1920\n1024\n",
         "ResolutionWidth,int32",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             std::vector<std::shared_ptr<AggregationFunction>> aggs;
             for (int64_t i = 0; i <= 89; i++) {
                 aggs.push_back(
                     std::make_shared<SumWithOffsetAggregation>("ResolutionWidth", i));
             }
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<GlobalAggregationOperator>(
                     std::make_shared<ScanOperator>(
                         input_clmn,
@@ -1392,9 +1429,10 @@ TEST(Test_Query, Q38) {
         "62,2013-07-21,1,1,0,http://d.com\n"
         "62,2013-07-22,0,0,0,http://e.com\n",
         "CounterID,int32\nEventDate,date\nIsRefresh,int16\nIsLink,int16\nIsDownload,int16\nURL,string",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<OffsetOperator>(
                     std::make_shared<TopKOperator>(
                         std::make_shared<GroupByAggregationOperator>(
@@ -1455,9 +1493,10 @@ TEST(Test_Query, Q39) {
         "CounterID,int32\nEventDate,date\nIsRefresh,int16\n"
         "TraficSourceID,int32\nSearchEngineID,int32\nAdvEngineID,int32\n"
         "Referer,string\nURL,string",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<OffsetOperator>(
                     std::make_shared<TopKOperator>(
                         std::make_shared<GroupByAggregationOperator>(
@@ -1525,9 +1564,10 @@ TEST(Test_Query, Q40) {
         "62,2013-07-22,0,6,99999,1005\n",
         "CounterID,int32\nEventDate,date\nIsRefresh,int16\n"
         "TraficSourceID,int32\nRefererHash,int64\nURLHash,int64",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<OffsetOperator>(
                     std::make_shared<TopKOperator>(
                         std::make_shared<GroupByAggregationOperator>(
@@ -1593,9 +1633,10 @@ TEST(Test_Query, Q41) {
         "62,2013-07-23,0,0,9999999999,1280,720\n",
         "CounterID,int32\nEventDate,date\nIsRefresh,int16\nDontCountHits,int16\n"
         "URLHash,int64\nWindowClientWidth,int16\nWindowClientHeight,int16",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<OffsetOperator>(
                     std::make_shared<TopKOperator>(
                         std::make_shared<GroupByAggregationOperator>(
@@ -1658,9 +1699,10 @@ TEST(Test_Query, Q42) {
         "62,2013-07-15,1,0,2013-07-15 10:30:05\n"
         "62,2013-07-15,0,1,2013-07-15 10:30:05\n",
         "CounterID,int32\nEventDate,date\nIsRefresh,int16\nDontCountHits,int16\nEventTime,timestamp",
-        [](const std::string& input_clmn, const std::string& result_clmn) {
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
             return std::make_shared<WriteOperator>(
-                result_clmn,
+                result_csv,
+                result_schema,
                 std::make_shared<OffsetOperator>(
                     std::make_shared<TopKOperator>(
                         std::make_shared<GroupByAggregationOperator>(

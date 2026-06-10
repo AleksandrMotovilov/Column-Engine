@@ -1,7 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Compression flags — must match the flags used when the .clmn file was created.
+# After changing, the script rebuilds run_query automatically before executing.
+ENABLE_RLE=ON
+ENABLE_DELTA=ON
+ENABLE_DICT=ON
+ENABLE_LZ4=ON
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+BUILD_DIR="${ROOT_DIR}/build"
 
 if [[ $# -lt 4 ]]; then
     echo "Usage: script/run_query.sh <query_num> <columnar> <output_csv> <log_file>" >&2
@@ -14,13 +22,21 @@ OUTPUT_CSV="$3"
 LOG_FILE="$4"
 QUERY_NUM_PADDED="$(printf "%02d" "${QUERY_NUM}")"
 
-BIN="${ROOT_DIR}/build/exe/run_query"
+BIN="${BUILD_DIR}/exe/run_query"
 
-if [[ ! -x "${BIN}" ]]; then
-    echo "ERROR: run_query not found at ${BIN}" >&2
-    echo "Run script/build.sh first" >&2
-    exit 1
-fi
+export CC="${CC:-clang-20}"
+export CXX="${CXX:-clang++-20}"
+
+cmake -S "${ROOT_DIR}" -B "${BUILD_DIR}" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DBUILD_TESTS=OFF \
+    -DENABLE_RLE="${ENABLE_RLE}" \
+    -DENABLE_DELTA="${ENABLE_DELTA}" \
+    -DENABLE_DICT="${ENABLE_DICT}" \
+    -DENABLE_LZ4="${ENABLE_LZ4}" \
+    > /dev/null 2>&1
+
+cmake --build "${BUILD_DIR}" --target run_query -j "$(nproc)" > /dev/null 2>&1
 
 if [[ ! -f "${COLUMNAR}" ]]; then
     echo "ERROR: columnar file not found: ${COLUMNAR}" >&2

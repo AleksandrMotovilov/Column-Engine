@@ -12,15 +12,15 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
 
     char padded[8];
     std::snprintf(padded, sizeof(padded), "q%02d", query_num);
-    std::string temp_clmn = output_dir + "/temp_result.clmn";
-    std::string temp_schema = output_dir + "/temp_schema.csv";
+    std::string output_schema = output_dir + "/schema.csv";
     std::string output_csv = output_dir + "/" + std::string(padded) + ".csv";
 
     std::shared_ptr<Operator> plan;
     switch (query_num) {
         case 0:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<GlobalAggregationOperator>(
                     std::make_shared<ScanOperator>(
                         input_clmn,
@@ -33,7 +33,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 1:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<GlobalAggregationOperator>(
                     std::make_shared<FilterOperator>(
                         std::make_shared<ScanOperator>(
@@ -49,7 +50,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 2:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<GlobalAggregationOperator>(
                     std::make_shared<ScanOperator>(
                         input_clmn,
@@ -64,7 +66,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 3:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<GlobalAggregationOperator>(
                     std::make_shared<ScanOperator>(
                         input_clmn,
@@ -77,7 +80,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 4:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<GlobalAggregationOperator>(
                     std::make_shared<ScanOperator>(
                         input_clmn,
@@ -90,7 +94,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 5:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<GlobalAggregationOperator>(
                     std::make_shared<ScanOperator>(
                         input_clmn,
@@ -103,7 +108,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 6:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<GlobalAggregationOperator>(
                     std::make_shared<ScanOperator>(
                         input_clmn,
@@ -117,7 +123,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 7:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<SortOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -139,7 +146,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 8:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ScanOperator>(
@@ -158,7 +166,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 9:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ScanOperator>(
@@ -180,7 +189,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 10:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -202,7 +212,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 11:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -224,7 +235,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 12:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -246,7 +258,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 13:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -268,7 +281,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 14:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -290,7 +304,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 15:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ScanOperator>(
@@ -309,7 +324,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 16:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ScanOperator>(
@@ -328,7 +344,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 17:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<LimitOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ScanOperator>(
@@ -347,7 +364,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 18:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ProjectOperator>(
@@ -370,7 +388,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 19:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<FilterOperator>(
                     std::make_shared<ScanOperator>(
                         input_clmn,
@@ -381,7 +400,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 20:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<GlobalAggregationOperator>(
                     std::make_shared<FilterOperator>(
                         std::make_shared<ScanOperator>(
@@ -397,7 +417,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 21:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -423,7 +444,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 22:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -454,7 +476,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 23:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<FilterOperator>(
                         std::make_shared<ScanOperator>(
@@ -468,7 +491,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 24:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<FilterOperator>(
                         std::make_shared<ScanOperator>(
@@ -482,7 +506,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 25:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<FilterOperator>(
                         std::make_shared<ScanOperator>(
@@ -496,7 +521,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 26:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<FilterOperator>(
                         std::make_shared<ScanOperator>(
@@ -510,7 +536,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 27:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<FilterOperator>(
                         std::make_shared<GroupByAggregationOperator>(
@@ -540,7 +567,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 28:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<FilterOperator>(
                         std::make_shared<GroupByAggregationOperator>(
@@ -584,7 +612,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
                     std::make_shared<SumWithOffsetAggregation>("ResolutionWidth", i));
             }
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<GlobalAggregationOperator>(
                     std::make_shared<ScanOperator>(
                         input_clmn, std::vector<std::string>{"ResolutionWidth"}),
@@ -593,7 +622,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
         }
         case 30:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -619,7 +649,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 31:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -645,7 +676,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 32:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ScanOperator>(
@@ -667,7 +699,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 33:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ScanOperator>(
@@ -686,7 +719,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 34:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ProjectOperator>(
@@ -709,7 +743,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 35:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<ProjectOperator>(
@@ -741,7 +776,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 36:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -782,7 +818,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 37:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<TopKOperator>(
                     std::make_shared<GroupByAggregationOperator>(
                         std::make_shared<FilterOperator>(
@@ -823,7 +860,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 38:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<OffsetOperator>(
                     std::make_shared<TopKOperator>(
                         std::make_shared<GroupByAggregationOperator>(
@@ -867,7 +905,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 39:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<OffsetOperator>(
                     std::make_shared<TopKOperator>(
                         std::make_shared<GroupByAggregationOperator>(
@@ -917,7 +956,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 40:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<OffsetOperator>(
                     std::make_shared<TopKOperator>(
                         std::make_shared<GroupByAggregationOperator>(
@@ -965,7 +1005,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 41:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<OffsetOperator>(
                     std::make_shared<TopKOperator>(
                         std::make_shared<GroupByAggregationOperator>(
@@ -1012,7 +1053,8 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
             break;
         case 42:
             plan = std::make_shared<WriteOperator>(
-                temp_clmn,
+                output_csv,
+                output_schema,
                 std::make_shared<OffsetOperator>(
                     std::make_shared<TopKOperator>(
                         std::make_shared<GroupByAggregationOperator>(
@@ -1060,11 +1102,10 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
     }
 
     plan->Next();
-    ConvertFromClmnToCsv(temp_clmn, temp_schema, output_csv);
 }
 
 int main(int argc, char** argv) {
-    SetBatchSize(50000, 50000);
+    SetBatchSize(100000, 100000);
 
     std::string input_clmn;
     std::string output_dir;
