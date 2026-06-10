@@ -21,6 +21,7 @@ private:
     size_t rows_number_;
     size_t columns_number_;
     size_t batches_number_;
+    size_t compression_flags_;
     size_t schema_offset_;
     size_t current_batch_;
     bool schema_read_;
@@ -37,8 +38,9 @@ public:
 private:
     std::ofstream fout_;
     size_t rows_number_;
-    size_t batches_number_;
     size_t columns_number_;
+    size_t batches_number_;
     size_t schema_start_;
+    size_t compression_flags_;
     bool schema_written_;
 };
