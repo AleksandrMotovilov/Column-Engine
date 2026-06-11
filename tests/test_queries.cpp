@@ -881,6 +881,184 @@ TEST(Test_Query, Q25) {
     );
 }
 
+// Q26: SELECT SearchPhrase FROM hits WHERE SearchPhrase <> '' ORDER BY EventTime, SearchPhrase LIMIT 10;
+TEST(Test_Query, Q26) {
+    RunQuery(
+        "test_q26",
+        "apple,2021-01-01 00:05:00\n"
+        ",2021-01-01 00:01:00\n"
+        "banana,2021-01-01 00:02:00\n"
+        "cherry,2021-01-01 00:01:00\n"
+        "date,2021-01-01 00:01:00\n",
+        "SearchPhrase,string\nEventTime,timestamp",
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
+            return std::make_shared<WriteOperator>(
+                result_csv,
+                result_schema,
+                std::make_shared<TopKOperator>(
+                    std::make_shared<FilterOperator>(
+                        std::make_shared<ScanOperator>(
+                            input_clmn,
+                            std::vector<std::string>{"SearchPhrase", "EventTime"}
+                        ),
+                        std::make_shared<NotEqualExpression>("SearchPhrase", "")
+                    ),
+                    std::vector<std::string>{"EventTime", "SearchPhrase"}, 10, false
+                )
+            );
+        },
+        "cherry,2021-01-01 00:01:00\n"
+        "date,2021-01-01 00:01:00\n"
+        "banana,2021-01-01 00:02:00\n"
+        "apple,2021-01-01 00:05:00\n"
+    );
+}
+
+// Q27: SELECT CounterID, AVG(STRLEN(URL)) AS l, COUNT(*) AS c FROM hits WHERE URL <> '' GROUP BY CounterID HAVING COUNT(*) > 2 ORDER BY l DESC LIMIT 5;
+TEST(Test_Query, Q27) {
+    RunQuery(
+        "test_q27",
+        "1,abc\n"
+        "1,abcd\n"
+        "1,abcde\n"
+        "2,ab\n"
+        "2,abcdef\n"
+        "2,abcd\n"
+        "2,abcdefgh\n"
+        "3,a\n"
+        "3,abc\n",
+        "CounterID,int32\nURL,string",
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
+            return std::make_shared<WriteOperator>(
+                result_csv,
+                result_schema,
+                std::make_shared<TopKOperator>(
+                    std::make_shared<FilterOperator>(
+                        std::make_shared<GroupByAggregationOperator>(
+                            std::make_shared<ProjectOperator>(
+                                std::make_shared<FilterOperator>(
+                                    std::make_shared<ScanOperator>(
+                                        input_clmn,
+                                        std::vector<std::string>{"CounterID", "URL"}
+                                    ),
+                                    std::make_shared<NotEqualExpression>("URL", "")
+                                ),
+                                std::make_shared<LengthExpression>("URL"),
+                                "strlen(URL)"
+                            ),
+                            std::vector<std::string>{"CounterID"},
+                            []() {
+                                return std::vector<std::shared_ptr<AggregationFunction>>{
+                                    std::make_shared<AvgAggregation>("strlen(URL)"),
+                                    std::make_shared<CountRowsAggregation>()
+                                };
+                            }
+                        ),
+                        std::make_shared<GreaterOrEqualExpression>("count(*)", "3")
+                    ),
+                    std::vector<std::string>{"avg(strlen(URL))"}, 5, true
+                )
+            );
+        },
+        "2,5,4\n1,4,3\n",
+        3
+    );
+}
+
+// Q28: SELECT REGEXP_REPLACE(Referer, ...) AS k, AVG(STRLEN(Referer)) AS l, COUNT(*) AS c, MIN(Referer) FROM hits WHERE Referer <> '' GROUP BY k HAVING COUNT(*) > 1 ORDER BY l DESC LIMIT 5;
+TEST(Test_Query, Q28) {
+    RunQuery(
+        "test_q28",
+        "http://www.google.com/search?q=test\n"
+        "https://example.org/page/1\n"
+        "http://www.google.com/maps\n"
+        "https://example.org/page/2\n"
+        "http://test.com/something\n",
+        "Referer,string",
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
+            return std::make_shared<WriteOperator>(
+                result_csv,
+                result_schema,
+                std::make_shared<TopKOperator>(
+                    std::make_shared<FilterOperator>(
+                        std::make_shared<GroupByAggregationOperator>(
+                            std::make_shared<ProjectOperator>(
+                                std::make_shared<ProjectOperator>(
+                                    std::make_shared<FilterOperator>(
+                                        std::make_shared<ScanOperator>(
+                                            input_clmn,
+                                            std::vector<std::string>{"Referer"}
+                                        ),
+                                        std::make_shared<NotEqualExpression>("Referer", "")
+                                    ),
+                                    std::make_shared<RegexpReplaceExpression>(
+                                        "Referer",
+                                        R"(^https?://(?:www\.)?([^/]+)/.*$)",
+                                        "$1"
+                                    ),
+                                    "k"
+                                ),
+                                std::make_shared<LengthExpression>("Referer"),
+                                "strlen(Referer)"
+                            ),
+                            std::vector<std::string>{"k"},
+                            []() {
+                                return std::vector<std::shared_ptr<AggregationFunction>>{
+                                    std::make_shared<AvgAggregation>("strlen(Referer)"),
+                                    std::make_shared<CountRowsAggregation>(),
+                                    std::make_shared<MinAggregation>("Referer")
+                                };
+                            }
+                        ),
+                        std::make_shared<GreaterOrEqualExpression>("count(*)", "2")
+                    ),
+                    std::vector<std::string>{"avg(strlen(Referer))"}, 5, true
+                )
+            );
+        },
+        "google.com,30,2,http://www.google.com/maps\n"
+        "example.org,26,2,https://example.org/page/1\n",
+        4
+    );
+}
+
+// Q29: SELECT SUM(ResolutionWidth), SUM(ResolutionWidth+1), ..., SUM(ResolutionWidth+89) FROM hits;
+TEST(Test_Query, Q29) {
+    std::string expected;
+    for (int64_t i = 0; i <= 89; i++) {
+        if (i > 0) {
+            expected += ",";
+        }
+        expected += std::to_string(4224 + 3 * i);
+    }
+    expected += "\n";
+
+    RunQuery(
+        "test_q29",
+        "1280\n1920\n1024\n",
+        "ResolutionWidth,int32",
+        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
+            std::vector<std::shared_ptr<AggregationFunction>> aggs;
+            for (int64_t i = 0; i <= 89; i++) {
+                aggs.push_back(
+                    std::make_shared<SumWithOffsetAggregation>("ResolutionWidth", i));
+            }
+            return std::make_shared<WriteOperator>(
+                result_csv,
+                result_schema,
+                std::make_shared<GlobalAggregationOperator>(
+                    std::make_shared<ScanOperator>(
+                        input_clmn,
+                        std::vector<std::string>{"ResolutionWidth"}
+                    ),
+                    aggs
+                )
+            );
+        },
+        expected
+    );
+}
+
 // Q30: SELECT SearchEngineID, ClientIP, COUNT(*) AS c, SUM(IsRefresh), AVG(ResolutionWidth) FROM hits WHERE SearchPhrase <> '' GROUP BY SearchEngineID, ClientIP ORDER BY c DESC LIMIT 10;
 TEST(Test_Query, Q30) {
     RunQuery(
@@ -1235,184 +1413,6 @@ TEST(Test_Query, Q37) {
         },
         "Welcome,2\nAbout,1\n",
         5
-    );
-}
-
-// Q26: SELECT SearchPhrase FROM hits WHERE SearchPhrase <> '' ORDER BY EventTime, SearchPhrase LIMIT 10;
-TEST(Test_Query, Q26) {
-    RunQuery(
-        "test_q26",
-        "apple,2021-01-01 00:05:00\n"
-        ",2021-01-01 00:01:00\n"
-        "banana,2021-01-01 00:02:00\n"
-        "cherry,2021-01-01 00:01:00\n"
-        "date,2021-01-01 00:01:00\n",
-        "SearchPhrase,string\nEventTime,timestamp",
-        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
-            return std::make_shared<WriteOperator>(
-                result_csv,
-                result_schema,
-                std::make_shared<TopKOperator>(
-                    std::make_shared<FilterOperator>(
-                        std::make_shared<ScanOperator>(
-                            input_clmn,
-                            std::vector<std::string>{"SearchPhrase", "EventTime"}
-                        ),
-                        std::make_shared<NotEqualExpression>("SearchPhrase", "")
-                    ),
-                    std::vector<std::string>{"EventTime", "SearchPhrase"}, 10, false
-                )
-            );
-        },
-        "cherry,2021-01-01 00:01:00\n"
-        "date,2021-01-01 00:01:00\n"
-        "banana,2021-01-01 00:02:00\n"
-        "apple,2021-01-01 00:05:00\n"
-    );
-}
-
-// Q27: SELECT CounterID, AVG(STRLEN(URL)) AS l, COUNT(*) AS c FROM hits WHERE URL <> '' GROUP BY CounterID HAVING COUNT(*) > 2 ORDER BY l DESC LIMIT 5;
-TEST(Test_Query, Q27) {
-    RunQuery(
-        "test_q27",
-        "1,abc\n"
-        "1,abcd\n"
-        "1,abcde\n"
-        "2,ab\n"
-        "2,abcdef\n"
-        "2,abcd\n"
-        "2,abcdefgh\n"
-        "3,a\n"
-        "3,abc\n",
-        "CounterID,int32\nURL,string",
-        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
-            return std::make_shared<WriteOperator>(
-                result_csv,
-                result_schema,
-                std::make_shared<TopKOperator>(
-                    std::make_shared<FilterOperator>(
-                        std::make_shared<GroupByAggregationOperator>(
-                            std::make_shared<ProjectOperator>(
-                                std::make_shared<FilterOperator>(
-                                    std::make_shared<ScanOperator>(
-                                        input_clmn,
-                                        std::vector<std::string>{"CounterID", "URL"}
-                                    ),
-                                    std::make_shared<NotEqualExpression>("URL", "")
-                                ),
-                                std::make_shared<LengthExpression>("URL"),
-                                "strlen(URL)"
-                            ),
-                            std::vector<std::string>{"CounterID"},
-                            []() {
-                                return std::vector<std::shared_ptr<AggregationFunction>>{
-                                    std::make_shared<AvgAggregation>("strlen(URL)"),
-                                    std::make_shared<CountRowsAggregation>()
-                                };
-                            }
-                        ),
-                        std::make_shared<GreaterOrEqualExpression>("count(*)", "3")
-                    ),
-                    std::vector<std::string>{"avg(strlen(URL))"}, 5, true
-                )
-            );
-        },
-        "2,5,4\n1,4,3\n",
-        3
-    );
-}
-
-// Q28: SELECT REGEXP_REPLACE(Referer, ...) AS k, AVG(STRLEN(Referer)) AS l, COUNT(*) AS c, MIN(Referer) FROM hits WHERE Referer <> '' GROUP BY k HAVING COUNT(*) > 1 ORDER BY l DESC LIMIT 5;
-TEST(Test_Query, Q28) {
-    RunQuery(
-        "test_q28",
-        "http://www.google.com/search?q=test\n"
-        "https://example.org/page/1\n"
-        "http://www.google.com/maps\n"
-        "https://example.org/page/2\n"
-        "http://test.com/something\n",
-        "Referer,string",
-        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
-            return std::make_shared<WriteOperator>(
-                result_csv,
-                result_schema,
-                std::make_shared<TopKOperator>(
-                    std::make_shared<FilterOperator>(
-                        std::make_shared<GroupByAggregationOperator>(
-                            std::make_shared<ProjectOperator>(
-                                std::make_shared<ProjectOperator>(
-                                    std::make_shared<FilterOperator>(
-                                        std::make_shared<ScanOperator>(
-                                            input_clmn,
-                                            std::vector<std::string>{"Referer"}
-                                        ),
-                                        std::make_shared<NotEqualExpression>("Referer", "")
-                                    ),
-                                    std::make_shared<RegexpReplaceExpression>(
-                                        "Referer",
-                                        R"(^https?://(?:www\.)?([^/]+)/.*$)",
-                                        "$1"
-                                    ),
-                                    "k"
-                                ),
-                                std::make_shared<LengthExpression>("Referer"),
-                                "strlen(Referer)"
-                            ),
-                            std::vector<std::string>{"k"},
-                            []() {
-                                return std::vector<std::shared_ptr<AggregationFunction>>{
-                                    std::make_shared<AvgAggregation>("strlen(Referer)"),
-                                    std::make_shared<CountRowsAggregation>(),
-                                    std::make_shared<MinAggregation>("Referer")
-                                };
-                            }
-                        ),
-                        std::make_shared<GreaterOrEqualExpression>("count(*)", "2")
-                    ),
-                    std::vector<std::string>{"avg(strlen(Referer))"}, 5, true
-                )
-            );
-        },
-        "google.com,30,2,http://www.google.com/maps\n"
-        "example.org,26,2,https://example.org/page/1\n",
-        4
-    );
-}
-
-// Q29: SELECT SUM(ResolutionWidth), SUM(ResolutionWidth+1), ..., SUM(ResolutionWidth+89) FROM hits;
-TEST(Test_Query, Q29) {
-    std::string expected;
-    for (int64_t i = 0; i <= 89; i++) {
-        if (i > 0) {
-            expected += ",";
-        }
-        expected += std::to_string(4224 + 3 * i);
-    }
-    expected += "\n";
-
-    RunQuery(
-        "test_q29",
-        "1280\n1920\n1024\n",
-        "ResolutionWidth,int32",
-        [](const std::string& input_clmn, const std::string& result_csv, const std::string& result_schema) {
-            std::vector<std::shared_ptr<AggregationFunction>> aggs;
-            for (int64_t i = 0; i <= 89; i++) {
-                aggs.push_back(
-                    std::make_shared<SumWithOffsetAggregation>("ResolutionWidth", i));
-            }
-            return std::make_shared<WriteOperator>(
-                result_csv,
-                result_schema,
-                std::make_shared<GlobalAggregationOperator>(
-                    std::make_shared<ScanOperator>(
-                        input_clmn,
-                        std::vector<std::string>{"ResolutionWidth"}
-                    ),
-                    aggs
-                )
-            );
-        },
-        expected
     );
 }
 
