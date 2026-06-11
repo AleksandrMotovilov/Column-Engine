@@ -14,6 +14,7 @@ constexpr size_t kFlagRLE = 1u;
 constexpr size_t kFlagDelta = 2u;
 constexpr size_t kFlagDict = 4u;
 constexpr size_t kFlagLZ4 = 8u;
+constexpr size_t kFlagBitPack = 16u;
 
 size_t GetCompressionFlags();
 

@@ -12,7 +12,8 @@ option(BUILD_TESTS "Build tests" ON)
 option(ENABLE_RLE "Enable RLE encoding for columns" ON)
 option(ENABLE_DELTA "Enable Delta encoding for integer columns" ON)
 option(ENABLE_DICT "Enable Dictionary encoding for string columns" ON)
-option(ENABLE_LZ4 "Enable LZ4 block compression" ON)
+option(ENABLE_LZ4     "Enable LZ4 block compression"                   ON)
+option(ENABLE_BITPACK "Enable Bit-Packing after RLE/Delta/Dict encoding" ON)
 
 include(FetchContent)
 
