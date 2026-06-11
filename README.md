@@ -1,38 +1,77 @@
 # Column-Engine
 
-Колоночный движок хранения данных на C++. Реализует собственный бинарный формат `.clmn`, оптимизированный для чтения отдельных колонок без сканирования всего файла, и набор операторов в стиле pull-based pipeline для выполнения аналитических запросов. Проект разработан как учебная реализация идей колоночных СУБД.
+Колоночный движок хранения данных на C++. Реализует собственный бинарный формат `clmn`, оптимизированный для чтения отдельных колонок без сканирования всего файла, и набор операторов в стиле pull-based pipeline для выполнения аналитических запросов. Проект разработан как учебная реализация идей колоночных СУБД.
 
 ---
 
-## Формат `.clmn`
+## Формат `clmn`
 
-Файл состоит из **батчей** колонок, **секции схемы** и **футера**:
+Файл состоит из **батчей** колонок, **секции схемы** и **footer'а**:
 
 ```
-┌─ батч 0 ──────────────────────────────────────────────────────┐
+┌─ батч 0 ───────────────────────────────────────────────────────┐
 │ metadata_offset : size_t                                       │
 │ data_col_0      : raw bytes                                    │
 │ data_col_1      : raw bytes                                    │
 │ ...                                                            │
-│ ── метаданные батча ───────────────────────────────────────── │
-│ batch_rows      : size_t   <- число строк в батче              │
-│ offset_col_0    : size_t   <- смещение от начала батча         │
+│ ── метаданные батча ────────────────────────────────────────── │
+│ batch_rows      : size_t                                       │
+│ offset_col_0    : size_t                                       │
 │ offset_col_1    : size_t                                       │
 │ ...                                                            │
-└───────────────────────────────────────────────────────────────┘
-┌─ батч 1 ─ ...
+└────────────────────────────────────────────────────────────────┘
+ ...
 ┌─ схема ────────────────────────────────────────────────────────┐
 │ для каждой колонки:                                            │
 │   type     : uint8_t                                           │
 │   name_len : size_t                                            │
 │   name     : char[name_len]                                    │
-└───────────────────────────────────────────────────────────────┘
-┌─ футер ────────────────────────────────────────────────────────┐
-│ rows_number    : size_t    <- общее число строк                 │
-│ columns_number : size_t    <- число колонок                     │
-│ batches_number : size_t    <- число батчей                      │
-│ schema_offset  : size_t    <- байт от конца файла до схемы     │
-└───────────────────────────────────────────────────────────────┘
+└────────────────────────────────────────────────────────────────┘
+┌─ footer ───────────────────────────────────────────────────────┐
+│ rows_number       : size_t    <- общее число строк             │
+│ columns_number    : size_t    <- число колонок                 │
+│ batches_number    : size_t    <- число батчей                  │
+│ compression_flags : size_t    <- флаги сжатия                  │
+│ schema_offset     : size_t    <- байт от конца файла до схемы  │
+└────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Сжатие
+
+Каждая колонка кодируется независимо перед записью в `clmn`. Флаги задаются при сборке; по умолчанию все включены, кроме `ENABLE_DELTA`.
+
+| Флаг | Типы | Описание |
+|------|------|----------|
+| `ENABLE_DELTA`   | Int16/Int32/Int64/Char/Date/Timestamp | Разностное кодирование (unsigned-арифметика) |
+| `ENABLE_RLE`     | Int16/Int32/Int64/Char/Date/Timestamp | RLE: `[run_count][values...][counts...]` |
+| `ENABLE_BITPACK` | Int16/Int32/Int64/Char/Date/Timestamp + String-коды | Bit-packing после RLE/Delta: значения упаковываются в минимальное число бит; для Dict — упаковывает uint32-коды |
+| `ENABLE_DICT`    | String | Per-batch словарь + коды: `[dict_size][dict][codes...]` |
+| `ENABLE_LZ4`     | все | LZ4 поверх закодированных байт: `[uncompressed_size][compressed_size][bytes]` |
+
+`Float` и `Double` не получают RLE/Delta/BitPack.
+
+`compression_flags` записывается в футер файла, поэтому читатель определяет схему декодирования из самого файла — независимо от своих compile-time флагов.
+
+Изменить флаги и пересобрать:
+
+```bash
+# В script/build.sh, script/convert.sh, script/run_query.sh отредактировать переменные в начале файла:
+ENABLE_RLE=ON
+ENABLE_DELTA=ON
+ENABLE_DICT=ON
+ENABLE_LZ4=OFF      # например, отключить LZ4
+ENABLE_BITPACK=ON
+
+./script/build.sh
+```
+
+Или напрямую через CMake:
+
+```bash
+cmake -S . -B build -DENABLE_LZ4=OFF -DENABLE_BITPACK=ON
+cmake --build build -j$(nproc)
 ```
 
 ---
@@ -106,6 +145,38 @@ Q21: N/A
 
 ---
 
+## Визуализация
+
+Скрипты в `graph/` строят графики на основе данных, которые задаются вручную прямо в файле. Требуется Python с пакетами `matplotlib` и `numpy` (установлены в `venv/`).
+
+```bash
+source venv/bin/activate
+
+# Перевести вывод bench_queries.sh в словарь {номер: мс}
+python3 graph/parse_bench.py bench_output.txt
+
+# Один запуск — время по всем запросам
+python3 graph/queries_ms.py   # время в мс → graph/visualization/queries_ms_*.png
+python3 graph/queries_s.py    # время в с  → graph/visualization/queries_s_*.png
+
+# Горячий и холодный кэш
+python3 graph/queries_runs_ms.py   # → queries_cold_ms_*.png, queries_hot_ms_*.png
+python3 graph/queries_runs_s.py    # → queries_cold_s_*.png,  queries_hot_s_*.png
+
+# Сравнение с DuckDB (горячий и холодный кэш)
+python3 graph/compare_ms.py   # → compare_cold_ms_*.png, compare_hot_ms_*.png
+python3 graph/compare_s.py    # → compare_cold_s_*.png,  compare_hot_s_*.png
+
+# Размеры файлов
+python3 graph/file_sizes.py   # → graph/visualization/file_sizes_*.png
+
+deactivate
+```
+
+В каждом файле в начале задаются переменные `DATASET`, `BATCH_ROWS_NUMBER` и словари с данными — отредактировать и перезапустить.
+
+---
+
 ## Структура проекта
 
 ```
@@ -118,6 +189,7 @@ src/
                                         CompareStringValues
     schema.h / schema.cpp            — Schema
     batch.h / batch.cpp              — Batch, kColumnBatchSize, kRowBatchSize, SetBatchSize
+    encoding.h / encoding.cpp        — EncodeColumn / DecodeColumn, GetCompressionFlags
     reader_writer_clmn.h / .cpp      — ReaderClmn, WriterClmn
     reader_writer_csv.h / .cpp       — ReaderCsv, WriterCsv
   convertion/
@@ -135,4 +207,14 @@ exe/
 tests/                               — GoogleTest (4 набора)
 clickbench/                          — датасет, схема, SQL-запросы, эталонные ответы
 script/                              — shell-скрипты для сборки, конвертации, проверки
+graph/
+  parse_bench.py                     — парсер вывода bench_queries.sh → dict {номер: мс}
+  queries_ms.py                      — график времени запросов (мс)
+  queries_s.py                       — график времени запросов (с)
+  queries_runs_ms.py                 — холодный и горячий кэш (мс), без DuckDB
+  queries_runs_s.py                  — холодный и горячий кэш (с), без DuckDB
+  compare_ms.py                      — сравнение с DuckDB, холодный и горячий кэш (мс)
+  compare_s.py                       — сравнение с DuckDB, холодный и горячий кэш (с)
+  file_sizes.py                      — сравнение размеров .clmn-файлов
+  visualization/                     — сохранённые графики (.png)
 ```

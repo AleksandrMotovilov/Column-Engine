@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Compression flags — must match the flags used when the .clmn file was created.
-# After changing, the script rebuilds run_query automatically before executing.
 ENABLE_RLE=ON
-ENABLE_DELTA=ON
+ENABLE_DELTA=OFF
 ENABLE_DICT=ON
 ENABLE_LZ4=ON
 ENABLE_BITPACK=ON
