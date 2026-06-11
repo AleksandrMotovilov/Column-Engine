@@ -7,6 +7,7 @@ ENABLE_RLE=ON
 ENABLE_DELTA=ON
 ENABLE_DICT=ON
 ENABLE_LZ4=ON
+ENABLE_BITPACK=ON
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${ROOT_DIR}/build"
@@ -34,6 +35,7 @@ cmake -S "${ROOT_DIR}" -B "${BUILD_DIR}" \
     -DENABLE_DELTA="${ENABLE_DELTA}" \
     -DENABLE_DICT="${ENABLE_DICT}" \
     -DENABLE_LZ4="${ENABLE_LZ4}" \
+    -DENABLE_BITPACK="${ENABLE_BITPACK}" \
     > /dev/null 2>&1
 
 cmake --build "${BUILD_DIR}" --target run_query -j "$(nproc)" > /dev/null 2>&1
