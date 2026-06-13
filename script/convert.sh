@@ -1,11 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ENABLE_RLE=ON
-ENABLE_DELTA=OFF
-ENABLE_DICT=ON
+ENABLE_DELTA_INT=OFF
+ENABLE_RLE_INT=ON
+ENABLE_RLE_FLOAT=ON
+ENABLE_RLE_STR=ON
+ENABLE_DICT_INT=ON
+ENABLE_DICT_FLOAT=ON
+ENABLE_DICT_STR=ON
+ENABLE_BITPACK_INT=ON
+ENABLE_BITPACK_FLOAT=ON
+ENABLE_BITPACK_STR=ON
 ENABLE_LZ4=ON
-ENABLE_BITPACK=ON
+ENABLE_ADAPTIVE=ON
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="${ROOT_DIR}/build"
@@ -31,11 +38,18 @@ export CXX="${CXX:-clang++-20}"
 cmake -S "${ROOT_DIR}" -B "${BUILD_DIR}" \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_TESTS=OFF \
-    -DENABLE_RLE="${ENABLE_RLE}" \
-    -DENABLE_DELTA="${ENABLE_DELTA}" \
-    -DENABLE_DICT="${ENABLE_DICT}" \
+    -DENABLE_RLE_INT="${ENABLE_RLE_INT}" \
+    -DENABLE_RLE_FLOAT="${ENABLE_RLE_FLOAT}" \
+    -DENABLE_RLE_STR="${ENABLE_RLE_STR}" \
+    -DENABLE_DELTA_INT="${ENABLE_DELTA_INT}" \
+    -DENABLE_DICT_INT="${ENABLE_DICT_INT}" \
+    -DENABLE_DICT_FLOAT="${ENABLE_DICT_FLOAT}" \
+    -DENABLE_DICT_STR="${ENABLE_DICT_STR}" \
     -DENABLE_LZ4="${ENABLE_LZ4}" \
-    -DENABLE_BITPACK="${ENABLE_BITPACK}" \
+    -DENABLE_BITPACK_INT="${ENABLE_BITPACK_INT}" \
+    -DENABLE_BITPACK_FLOAT="${ENABLE_BITPACK_FLOAT}" \
+    -DENABLE_BITPACK_STR="${ENABLE_BITPACK_STR}" \
+    -DENABLE_ADAPTIVE="${ENABLE_ADAPTIVE}" \
     > /dev/null 2>&1
 
 cmake --build "${BUILD_DIR}" --target csv_to_clmn -j "$(nproc)" > /dev/null 2>&1
@@ -52,4 +66,7 @@ fi
 
 mkdir -p "$(dirname "${OUTPUT_CLMN}")"
 
+start_ns="$(date +%s%N)"
 "${BIN}" --input "${INPUT_CSV}" --schema "${INPUT_SCHEMA}" --output "${OUTPUT_CLMN}"
+elapsed_ns=$(( $(date +%s%N) - start_ns ))
+echo "Conversion time: $(echo "scale=3; ${elapsed_ns} / 1000000000" | bc) s"
