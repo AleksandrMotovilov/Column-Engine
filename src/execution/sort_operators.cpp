@@ -34,16 +34,13 @@ std::shared_ptr<Batch> SortOperator::Next() {
     }
 
     Type sort_type = schema->GetType(sort_column_index);
-    std::vector<std::string> sort_column_strings(merged->GetRowsNumber());
-    for (size_t i = 0; i < merged->GetRowsNumber(); i++) {
-        sort_column_strings[i] = GetStringValueAt(merged->GetColumn(sort_column_index), sort_type, i);
-    }
+    std::function<int(size_t, size_t)> compare_function = MakeColumnComparator(merged->GetColumn(sort_column_index), sort_type);
 
     std::vector<size_t> indices(merged->GetRowsNumber());
     std::iota(indices.begin(), indices.end(), 0);
     std::stable_sort(indices.begin(), indices.end(),
         [&](size_t a, size_t b) {
-            int cmp = CompareStringValues(sort_column_strings[a], sort_column_strings[b], sort_type);
+            int cmp = compare_function(a, b);
             if (descending_) {
                 cmp = -cmp;
             }

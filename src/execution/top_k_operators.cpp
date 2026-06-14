@@ -6,17 +6,14 @@ std::shared_ptr<Batch> TopKFromBatch(std::shared_ptr<Batch> batch, size_t k, con
     std::vector<size_t> indices(rows_number);
     std::iota(indices.begin(), indices.end(), 0);
     if (!sort_keys.empty()) {
-        std::vector<std::vector<std::string>> sort_columns_strings(sort_keys.size());
-        for (size_t i = 0; i < sort_keys.size(); i++) {
-            sort_columns_strings[i].resize(rows_number);
-            for (size_t j = 0; j < rows_number; j++) {
-                sort_columns_strings[i][j] = GetStringValueAt(batch->GetColumn(sort_keys[i].first), sort_keys[i].second, j);
-            }
+        std::vector<std::function<int(size_t, size_t)>> comparators;
+        for (const auto& [column_index, column_type] : sort_keys) {
+            comparators.push_back(MakeColumnComparator(batch->GetColumn(column_index), column_type));
         }
         std::partial_sort(indices.begin(), indices.begin() + actual_k, indices.end(),
             [&](size_t a, size_t b) -> bool {
-                for (size_t i = 0; i < sort_keys.size(); i++) {
-                    int cmp = CompareStringValues(sort_columns_strings[i][a], sort_columns_strings[i][b], sort_keys[i].second);
+                for (const std::function<int(size_t, size_t)>& compare_function : comparators) {
+                    int cmp = compare_function(a, b);
                     if (descending) {
                         cmp = -cmp;
                     }

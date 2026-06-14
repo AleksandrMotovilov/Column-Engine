@@ -19,4 +19,3 @@ private:
     bool descending_;
     bool done_;
 };
-

@@ -1,15 +1,73 @@
 #include "src/execution/group_by_aggregation_operators.h"
 
-struct VectorStringHash {
-    size_t operator()(const std::vector<std::string>& v) const
-    {
-        size_t seed = v.size();
-        for (const std::string& s : v) {
-            seed ^= std::hash<std::string>{}(s) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
-        }
-        return seed;
+size_t VectorCharHash::operator()(const std::vector<char>& v) const {
+    size_t seed = v.size();
+    for (char c : v) {
+        seed ^= std::hash<char>{}(c) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
     }
-};
+    return seed;
+}
+
+void AppendToKey(std::vector<char>& key, std::shared_ptr<Column> column, Type type, size_t index) {
+    switch (type) {
+        case Type::Int16: {
+            int16_t value = dynamic_cast<const ColumnTyped<int16_t>&>(*column).GetData()[index];
+            const char* ptr = reinterpret_cast<const char*>(&value);
+            key.insert(key.end(), ptr, ptr + sizeof(int16_t));
+            break;
+        }
+        case Type::Int32: {
+            int32_t value = dynamic_cast<const ColumnTyped<int32_t>&>(*column).GetData()[index];
+            const char* ptr = reinterpret_cast<const char*>(&value);
+            key.insert(key.end(), ptr, ptr + sizeof(int32_t));
+            break;
+        }
+        case Type::Int64: {
+            int64_t value = dynamic_cast<const ColumnTyped<int64_t>&>(*column).GetData()[index];
+            const char* ptr = reinterpret_cast<const char*>(&value);
+            key.insert(key.end(), ptr, ptr + sizeof(int64_t));
+            break;
+        }
+        case Type::Float: {
+            float value = dynamic_cast<const ColumnTyped<float>&>(*column).GetData()[index];
+            const char* ptr = reinterpret_cast<const char*>(&value);
+            key.insert(key.end(), ptr, ptr + sizeof(float));
+            break;
+        }
+        case Type::Double: {
+            double value = dynamic_cast<const ColumnTyped<double>&>(*column).GetData()[index];
+            const char* ptr = reinterpret_cast<const char*>(&value);
+            key.insert(key.end(), ptr, ptr + sizeof(double));
+            break;
+        }
+        case Type::Date: {
+            int32_t value = dynamic_cast<const ColumnTyped<Date>&>(*column).GetData()[index].GetValue();
+            const char* ptr = reinterpret_cast<const char*>(&value);
+            key.insert(key.end(), ptr, ptr + sizeof(int32_t));
+            break;
+        }
+        case Type::Timestamp: {
+            int64_t value = dynamic_cast<const ColumnTyped<Timestamp>&>(*column).GetData()[index].GetValue();
+            const char* ptr = reinterpret_cast<const char*>(&value);
+            key.insert(key.end(), ptr, ptr + sizeof(int64_t));
+            break;
+        }
+        case Type::Char: {
+            char value = dynamic_cast<const ColumnTyped<char>&>(*column).GetData()[index];
+            key.push_back(value);
+            break;
+        }
+        case Type::String: {
+            const std::string& s = dynamic_cast<const ColumnTyped<std::string>&>(*column).GetData()[index];
+            size_t len = s.size();
+            key.insert(key.end(), reinterpret_cast<const char*>(&len), reinterpret_cast<const char*>(&len) + sizeof(size_t));
+            key.insert(key.end(), s.begin(), s.end());
+            break;
+        }
+        default:
+            throw std::runtime_error("Unsupported type :: AppendToKey");
+    }
+}
 
 GroupByAggregationOperator::GroupByAggregationOperator(std::shared_ptr<Operator> next, std::vector<std::string> group_by_columns, AggregationFactory aggregation_factory) {
     next_ = std::move(next);
@@ -48,20 +106,20 @@ std::shared_ptr<Batch> GroupByAggregationOperator::Next() {
         group_column_types.push_back(merged_schema->GetType(index));
     }
 
-    std::unordered_map<std::vector<std::string>, size_t, VectorStringHash> key_to_index;
-    std::vector<std::vector<std::string>> keys;
+    std::unordered_map<std::vector<char>, size_t, VectorCharHash> key_to_index;
+    std::vector<size_t> group_representative_rows;
     std::vector<std::vector<size_t>> group_row_indices;
     for (size_t row = 0; row < merged->GetRowsNumber(); row++) {
-        std::vector<std::string> key;
+        std::vector<char> key;
         for (size_t i = 0; i < group_column_indices.size(); i++) {
-            key.push_back(GetStringValueAt(merged->GetColumn(group_column_indices[i]), group_column_types[i], row));
+            AppendToKey(key, merged->GetColumn(group_column_indices[i]), group_column_types[i], row);
         }
         auto it = key_to_index.find(key);
         size_t index;
         if (it == key_to_index.end()) {
-            index = keys.size();
+            index = group_representative_rows.size();
             key_to_index[key] = index;
-            keys.push_back(key);
+            group_representative_rows.push_back(row);
             group_row_indices.push_back({});
         } else {
             index = it->second;
@@ -69,13 +127,13 @@ std::shared_ptr<Batch> GroupByAggregationOperator::Next() {
         group_row_indices[index].push_back(row);
     }
 
-    if (keys.empty()) {
+    if (group_representative_rows.empty()) {
         return nullptr;
     }
 
-    size_t result_rows = keys.size();
+    size_t result_rows = group_representative_rows.size();
     size_t sub_columns_count = merged_schema->GetColumnsNumber();
-    std::vector<std::vector<std::string>> aggregation_results(result_rows);
+    std::vector<std::vector<char>> agg_bufs;
     std::vector<Type> aggregation_types;
     std::vector<std::string> aggregation_names;
 
@@ -89,13 +147,16 @@ std::shared_ptr<Batch> GroupByAggregationOperator::Next() {
         std::vector<std::shared_ptr<AggregationFunction>> aggregations = aggregation_factory_();
         for (std::shared_ptr<AggregationFunction>& agg : aggregations) {
             agg->Update(sub);
-            aggregation_results[group_index].push_back(agg->GetResult());
         }
-        if (aggregation_types.empty()) {
+        if (agg_bufs.empty()) {
+            agg_bufs.resize(aggregations.size());
             for (std::shared_ptr<AggregationFunction>& agg : aggregations) {
                 aggregation_types.push_back(agg->GetType());
                 aggregation_names.push_back(agg->GetName());
             }
+        }
+        for (size_t i = 0; i < aggregations.size(); i++) {
+            aggregations[i]->AppendResultBytes(agg_bufs[i]);
         }
     }
 
@@ -108,20 +169,12 @@ std::shared_ptr<Batch> GroupByAggregationOperator::Next() {
     result_names.insert(result_names.end(), aggregation_names.begin(), aggregation_names.end());
     result_types.insert(result_types.end(), aggregation_types.begin(), aggregation_types.end());
 
-    size_t total_columns_number = result_names.size();
-    std::vector<std::vector<std::string>> column_strings(total_columns_number);
-    for (size_t group_index = 0; group_index < result_rows; group_index++) {
-        for (size_t i = 0; i < group_by_columns_.size(); i++) {
-            column_strings[i].push_back(keys[group_index][i]);
-        }
-        for (size_t i = 0; i < aggregation_names.size(); i++) {
-            column_strings[group_by_columns_.size() + i].push_back(aggregation_results[group_index][i]);
-        }
-    }
-
     std::vector<std::shared_ptr<Column>> result_columns;
-    for (size_t i = 0; i < total_columns_number; i++) {
-        result_columns.push_back(MakeColumnFromStrings(result_types[i], column_strings[i]));
+    for (size_t i = 0; i < group_by_columns_.size(); i++) {
+        result_columns.push_back(CopyRowsTyped(merged->GetColumn(group_column_indices[i]), group_column_types[i], group_representative_rows));
+    }
+    for (size_t i = 0; i < aggregation_names.size(); i++) {
+        result_columns.push_back(MakeColumnFromBytes(agg_bufs[i], aggregation_types[i], result_rows));
     }
 
     return std::make_shared<Batch>(result_rows, std::make_shared<Schema>(std::move(result_names), std::move(result_types)), std::move(result_columns));
