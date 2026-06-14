@@ -31,7 +31,9 @@ std::shared_ptr<Batch> GlobalAggregationOperator::Next() {
         Type type = aggregation->GetType();
         result_types.push_back(type);
         result_names.push_back(aggregation->GetName());
-        result_columns.push_back(MakeSingleValueColumn(type, aggregation->GetResult()));
+        std::vector<char> buf;
+        aggregation->AppendResultBytes(buf);
+        result_columns.push_back(MakeColumnFromBytes(buf, type, 1));
     }
     return std::make_shared<Batch>(1, std::make_shared<Schema>(std::move(result_names), std::move(result_types)), std::move(result_columns));
 }

@@ -10,6 +10,12 @@
 #include "src/kernel/batch.h"
 #include "src/kernel/column_utils.h"
 
+struct VectorCharHash {
+    size_t operator()(const std::vector<char>& v) const;
+};
+
+void AppendToKey(std::vector<char>& key, std::shared_ptr<Column> column, Type type, size_t index);
+
 class GroupByAggregationOperator : public Operator {
 public:
     using AggregationFactory = std::function<std::vector<std::shared_ptr<AggregationFunction>>()>;

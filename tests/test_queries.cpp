@@ -994,7 +994,7 @@ TEST(Test_Query, Q28) {
                                     std::make_shared<RegexpReplaceExpression>(
                                         "Referer",
                                         R"(^https?://(?:www\.)?([^/]+)/.*$)",
-                                        "$1"
+                                        "\\1"
                                     ),
                                     "k"
                                 ),

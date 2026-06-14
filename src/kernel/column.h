@@ -11,8 +11,8 @@ class Column {
 public:
     virtual ~Column() = default;
     virtual size_t GetSize() const = 0;
-    virtual std::string GetMin() const = 0;
-    virtual std::string GetMax() const = 0;
+    virtual void AppendMinBytes(std::vector<char>& buf) const = 0;
+    virtual void AppendMaxBytes(std::vector<char>& buf) const = 0;
     virtual __int128 GetSum() const = 0;
 };
 
@@ -24,22 +24,22 @@ public:
         if (column_.empty()) {
             return;
         }
-        T min_val = column_[0];
-        T max_val = column_[0];
+        T min_value = column_[0];
+        T max_value = column_[0];
         __int128 sum = 0;
-        for (const T& val : column_) {
-            if (val < min_val) {
-                min_val = val;
+        for (const T& value : column_) {
+            if (value < min_value) {
+                min_value = value;
             }
-            if (val > max_val) {
-                max_val = val;
+            if (value > max_value) {
+                max_value = value;
             }
             if constexpr (std::is_arithmetic_v<T>) {
-                sum += static_cast<__int128>(val);
+                sum += static_cast<__int128>(value);
             }
         }
-        min_val_ = min_val;
-        max_val_ = max_val;
+        min_value_ = min_value;
+        max_value_ = max_value;
         sum_ = sum;
     }
 
@@ -47,18 +47,14 @@ public:
         return column_.size();
     }
 
-    std::string GetMin() const override {
-        if (column_.empty()) {
-            return "";
-        }
-        return ToString<T>(min_val_);
+    void AppendMinBytes(std::vector<char>& buf) const override {
+        const char* ptr = reinterpret_cast<const char*>(&min_value_);
+        buf.insert(buf.end(), ptr, ptr + sizeof(T));
     }
 
-    std::string GetMax() const override {
-        if (column_.empty()) {
-            return "";
-        }
-        return ToString<T>(max_val_);
+    void AppendMaxBytes(std::vector<char>& buf) const override {
+        const char* ptr = reinterpret_cast<const char*>(&max_value_);
+        buf.insert(buf.end(), ptr, ptr + sizeof(T));
     }
 
     __int128 GetSum() const override {
@@ -73,18 +69,10 @@ public:
         return std::move(column_);
     }
 
-    const T& GetMinValue() const {
-        return min_val_;
-    }
-
-    const T& GetMaxValue() const {
-        return max_val_;
-    }
-
 private:
     std::vector<T> column_;
-    T min_val_ = T{};
-    T max_val_ = T{};
+    T min_value_ = T{};
+    T max_value_ = T{};
     __int128 sum_ = 0;
 };
 
@@ -94,3 +82,20 @@ ColumnTyped<Date>::ColumnTyped(std::vector<Date>&& data);
 template<>
 ColumnTyped<Timestamp>::ColumnTyped(std::vector<Timestamp>&& data);
 
+template<>
+void ColumnTyped<Date>::AppendMinBytes(std::vector<char>& buf) const;
+
+template<>
+void ColumnTyped<Date>::AppendMaxBytes(std::vector<char>& buf) const;
+
+template<>
+void ColumnTyped<Timestamp>::AppendMinBytes(std::vector<char>& buf) const;
+
+template<>
+void ColumnTyped<Timestamp>::AppendMaxBytes(std::vector<char>& buf) const;
+
+template<>
+void ColumnTyped<std::string>::AppendMinBytes(std::vector<char>& buf) const;
+
+template<>
+void ColumnTyped<std::string>::AppendMaxBytes(std::vector<char>& buf) const;

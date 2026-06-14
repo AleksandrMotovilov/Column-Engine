@@ -1,18 +1,18 @@
 #pragma once
 
+#include <cstring>
 #include <memory>
 #include <optional>
 #include <string>
 #include <unordered_set>
 #include "src/kernel/batch.h"
 #include "src/kernel/column.h"
-#include "src/kernel/column_utils.h"
 
 class AggregationFunction {
 public:
     virtual ~AggregationFunction() = default;
     virtual void Update(std::shared_ptr<Batch> batch) = 0;
-    virtual std::string GetResult() const = 0;
+    virtual void AppendResultBytes(std::vector<char>& buf) const = 0;
     virtual Type GetType() const = 0;
     virtual std::string GetName() const = 0;
 };
@@ -20,7 +20,7 @@ public:
 class CountRowsAggregation : public AggregationFunction {
 public:
     void Update(std::shared_ptr<Batch> batch) override;
-    std::string GetResult() const override;
+    void AppendResultBytes(std::vector<char>& buf) const override;
     Type GetType() const override;
     std::string GetName() const override;
 
@@ -40,14 +40,16 @@ public:
         if (index == batch->GetColumnsNumber()) {
             throw std::runtime_error("Column not found: " + column_name_ + " :: CountDistinctAggregation");
         }
-        const std::vector<T>& data = dynamic_cast<const ColumnTyped<T>&>(*batch->GetColumn(index)).GetData();
-        for (const T& val : data) {
-            values_.insert(val);
+        const std::vector<T>& column_data = dynamic_cast<const ColumnTyped<T>&>(*batch->GetColumn(index)).GetData();
+        for (const T& value : column_data) {
+            values_.insert(value);
         }
     }
 
-    std::string GetResult() const override {
-        return ToString<int64_t>(static_cast<int64_t>(values_.size()));
+    void AppendResultBytes(std::vector<char>& buf) const override {
+        int64_t count = static_cast<int64_t>(values_.size());
+        const char* ptr = reinterpret_cast<const char*>(&count);
+        buf.insert(buf.end(), ptr, ptr + sizeof(int64_t));
     }
 
     Type GetType() const override {
@@ -68,7 +70,7 @@ class CountDistinctAggregationTyped<Date> : public AggregationFunction {
 public:
     explicit CountDistinctAggregationTyped(std::string column_name);
     void Update(std::shared_ptr<Batch> batch) override;
-    std::string GetResult() const override;
+    void AppendResultBytes(std::vector<char>& buf) const override;
     Type GetType() const override;
     std::string GetName() const override;
 
@@ -82,7 +84,7 @@ class CountDistinctAggregationTyped<Timestamp> : public AggregationFunction {
 public:
     explicit CountDistinctAggregationTyped(std::string column_name);
     void Update(std::shared_ptr<Batch> batch) override;
-    std::string GetResult() const override;
+    void AppendResultBytes(std::vector<char>& buf) const override;
     Type GetType() const override;
     std::string GetName() const override;
 
@@ -95,7 +97,7 @@ class CountDistinctAggregation : public AggregationFunction {
 public:
     explicit CountDistinctAggregation(std::string column_name);
     void Update(std::shared_ptr<Batch> batch) override;
-    std::string GetResult() const override;
+    void AppendResultBytes(std::vector<char>& buf) const override;
     Type GetType() const override;
     std::string GetName() const override;
 
@@ -108,7 +110,7 @@ class SumAggregation : public AggregationFunction {
 public:
     explicit SumAggregation(std::string column_name);
     void Update(std::shared_ptr<Batch> batch) override;
-    std::string GetResult() const override;
+    void AppendResultBytes(std::vector<char>& buf) const override;
     Type GetType() const override;
     std::string GetName() const override;
 
@@ -117,11 +119,25 @@ private:
     __int128 sum_ = 0;
 };
 
+class SumWithOffsetAggregation : public AggregationFunction {
+public:
+    SumWithOffsetAggregation(std::string column_name, int64_t offset);
+    void Update(std::shared_ptr<Batch> batch) override;
+    void AppendResultBytes(std::vector<char>& buf) const override;
+    Type GetType() const override;
+    std::string GetName() const override;
+
+private:
+    std::string column_name_;
+    int64_t offset_;
+    __int128 sum_ = 0;
+};
+
 class AvgAggregation : public AggregationFunction {
 public:
     explicit AvgAggregation(std::string column_name);
     void Update(std::shared_ptr<Batch> batch) override;
-    std::string GetResult() const override;
+    void AppendResultBytes(std::vector<char>& buf) const override;
     Type GetType() const override;
     std::string GetName() const override;
 
@@ -143,21 +159,26 @@ public:
         if (index == batch->GetColumnsNumber()) {
             throw std::runtime_error("Column not found: " + column_name_ + " :: MinAggregation");
         }
-        const ColumnTyped<T>& column = dynamic_cast<const ColumnTyped<T>&>(*batch->GetColumn(index));
-        if (column.GetSize() == 0) {
+        std::shared_ptr<Column> column = batch->GetColumn(index);
+        if (column->GetSize() == 0) {
             return;
         }
-        const T& batch_min = column.GetMinValue();
-        if (!min_val_.has_value() || batch_min < *min_val_) {
-            min_val_ = batch_min;
+        std::vector<char> buf;
+        column->AppendMinBytes(buf);
+        T batch_min;
+        std::memcpy(&batch_min, buf.data(), sizeof(T));
+        if (!min_value_.has_value() || batch_min < *min_value_) {
+            min_value_ = batch_min;
         }
     }
 
-    std::string GetResult() const override {
-        if (!min_val_.has_value()) {
-            return "";
+    void AppendResultBytes(std::vector<char>& buf) const override {
+        T value = T{};
+        if (min_value_.has_value()) {
+            value = *min_value_;
         }
-        return ToString<T>(*min_val_);
+        const char* ptr = reinterpret_cast<const char*>(&value);
+        buf.insert(buf.end(), ptr, ptr + sizeof(T));
     }
 
     Type GetType() const override {
@@ -170,7 +191,32 @@ public:
 
 private:
     std::string column_name_;
-    std::optional<T> min_val_;
+    std::optional<T> min_value_;
+};
+
+template<>
+void MinAggregationTyped<std::string>::Update(std::shared_ptr<Batch> batch);
+
+template<>
+void MinAggregationTyped<std::string>::AppendResultBytes(std::vector<char>& buf) const;
+
+template<>
+void MinAggregationTyped<Date>::AppendResultBytes(std::vector<char>& buf) const;
+
+template<>
+void MinAggregationTyped<Timestamp>::AppendResultBytes(std::vector<char>& buf) const;
+
+class MinAggregation : public AggregationFunction {
+public:
+    explicit MinAggregation(std::string column_name);
+    void Update(std::shared_ptr<Batch> batch) override;
+    void AppendResultBytes(std::vector<char>& buf) const override;
+    Type GetType() const override;
+    std::string GetName() const override;
+
+private:
+    std::string column_name_;
+    std::shared_ptr<AggregationFunction> function_;
 };
 
 template<typename T>
@@ -185,21 +231,26 @@ public:
         if (index == batch->GetColumnsNumber()) {
             throw std::runtime_error("Column not found: " + column_name_ + " :: MaxAggregation");
         }
-        const ColumnTyped<T>& column = dynamic_cast<const ColumnTyped<T>&>(*batch->GetColumn(index));
-        if (column.GetSize() == 0) {
+        std::shared_ptr<Column> column = batch->GetColumn(index);
+        if (column->GetSize() == 0) {
             return;
         }
-        const T& batch_max = column.GetMaxValue();
-        if (!max_val_.has_value() || batch_max > *max_val_) {
-            max_val_ = batch_max;
+        std::vector<char> buf;
+        column->AppendMaxBytes(buf);
+        T batch_max;
+        std::memcpy(&batch_max, buf.data(), sizeof(T));
+        if (!max_value_.has_value() || batch_max > *max_value_) {
+            max_value_ = batch_max;
         }
     }
 
-    std::string GetResult() const override {
-        if (!max_val_.has_value()) {
-            return "";
+    void AppendResultBytes(std::vector<char>& buf) const override {
+        T value = T{};
+        if (max_value_.has_value()) {
+            value = *max_value_;
         }
-        return ToString<T>(*max_val_);
+        const char* ptr = reinterpret_cast<const char*>(&value);
+        buf.insert(buf.end(), ptr, ptr + sizeof(T));
     }
 
     Type GetType() const override {
@@ -212,45 +263,30 @@ public:
 
 private:
     std::string column_name_;
-    std::optional<T> max_val_;
+    std::optional<T> max_value_;
 };
 
-class MinAggregation : public AggregationFunction {
-public:
-    explicit MinAggregation(std::string column_name);
-    void Update(std::shared_ptr<Batch> batch) override;
-    std::string GetResult() const override;
-    Type GetType() const override;
-    std::string GetName() const override;
+template<>
+void MaxAggregationTyped<std::string>::Update(std::shared_ptr<Batch> batch);
 
-private:
-    std::string column_name_;
-    std::shared_ptr<AggregationFunction> function_;
-};
+template<>
+void MaxAggregationTyped<Date>::AppendResultBytes(std::vector<char>& buf) const;
+
+template<>
+void MaxAggregationTyped<Timestamp>::AppendResultBytes(std::vector<char>& buf) const;
+
+template<>
+void MaxAggregationTyped<std::string>::AppendResultBytes(std::vector<char>& buf) const;
 
 class MaxAggregation : public AggregationFunction {
 public:
     explicit MaxAggregation(std::string column_name);
     void Update(std::shared_ptr<Batch> batch) override;
-    std::string GetResult() const override;
+    void AppendResultBytes(std::vector<char>& buf) const override;
     Type GetType() const override;
     std::string GetName() const override;
 
 private:
     std::string column_name_;
     std::shared_ptr<AggregationFunction> function_;
-};
-
-class SumWithOffsetAggregation : public AggregationFunction {
-public:
-    SumWithOffsetAggregation(std::string column_name, int64_t offset);
-    void Update(std::shared_ptr<Batch> batch) override;
-    std::string GetResult() const override;
-    Type GetType() const override;
-    std::string GetName() const override;
-
-private:
-    std::string column_name_;
-    int64_t offset_;
-    __int128 sum_ = 0;
 };

@@ -113,49 +113,6 @@ std::shared_ptr<Column> CopyRowsTyped(std::shared_ptr<Column> column, Type colum
     }
 }
 
-std::shared_ptr<Column> MakeSingleValueColumn(Type column_type, const std::string& value) {
-    switch (column_type) {
-        case Type::Int16: {
-            std::vector<int16_t> v = {FromString<int16_t>(value)};
-            return std::make_shared<ColumnTyped<int16_t>>(std::move(v));
-        }
-        case Type::Int32: {
-            std::vector<int32_t> v = {FromString<int32_t>(value)};
-            return std::make_shared<ColumnTyped<int32_t>>(std::move(v));
-        }
-        case Type::Int64: {
-            std::vector<int64_t> v = {FromString<int64_t>(value)};
-            return std::make_shared<ColumnTyped<int64_t>>(std::move(v));
-        }
-        case Type::Float: {
-            std::vector<float> v = {FromString<float>(value)};
-            return std::make_shared<ColumnTyped<float>>(std::move(v));
-        }
-        case Type::Double: {
-            std::vector<double> v = {FromString<double>(value)};
-            return std::make_shared<ColumnTyped<double>>(std::move(v));
-        }
-        case Type::Date: {
-            std::vector<Date> v = {FromString<Date>(value)};
-            return std::make_shared<ColumnTyped<Date>>(std::move(v));
-        }
-        case Type::Timestamp: {
-            std::vector<Timestamp> v = {FromString<Timestamp>(value)};
-            return std::make_shared<ColumnTyped<Timestamp>>(std::move(v));
-        }
-        case Type::Char: {
-            std::vector<char> v = {FromString<char>(value)};
-            return std::make_shared<ColumnTyped<char>>(std::move(v));
-        }
-        case Type::String: {
-            std::vector<std::string> v = {value};
-            return std::make_shared<ColumnTyped<std::string>>(std::move(v));
-        }
-        default:
-            throw std::runtime_error("Unsupported type :: MakeSingleValueColumn");
-    }
-}
-
 std::shared_ptr<Column> MakeColumnFromStrings(Type column_type, const std::vector<std::string>& strs) {
     size_t rows_number = strs.size();
     switch (column_type) {
@@ -232,97 +189,186 @@ std::shared_ptr<Column> MakeColumnFromStrings(Type column_type, const std::vecto
     }
 }
 
-int CompareStringValues(const std::string& a, const std::string& b, Type column_type) {
+std::function<int(size_t, size_t)> MakeColumnComparator(std::shared_ptr<Column> column, Type column_type) {
     switch (column_type) {
         case Type::Int16: {
-            int16_t va = FromString<int16_t>(a), vb = FromString<int16_t>(b);
-            if (va < vb) {
-                return -1;
-            }
-            if (va > vb) {
-                return 1;
-            }
-            return 0;
+            const std::vector<int16_t>& data = dynamic_cast<const ColumnTyped<int16_t>&>(*column).GetData();
+            return [&data](size_t a, size_t b) {
+                if (data[a] < data[b]) {
+                    return -1;
+                }
+                if (data[a] > data[b]) {
+                    return 1;
+                }
+                return 0;
+            };
         }
         case Type::Int32: {
-            int32_t va = FromString<int32_t>(a), vb = FromString<int32_t>(b);
-            if (va < vb) {
-                return -1;
-            }
-            if (va > vb) {
-                return 1;
-            }
-            return 0;
+            const std::vector<int32_t>& data = dynamic_cast<const ColumnTyped<int32_t>&>(*column).GetData();
+            return [&data](size_t a, size_t b) {
+                if (data[a] < data[b]) {
+                    return -1;
+                }
+                if (data[a] > data[b]) {
+                    return 1;
+                }
+                return 0;
+            };
         }
         case Type::Int64: {
-            int64_t va = FromString<int64_t>(a), vb = FromString<int64_t>(b);
-            if (va < vb) {
-                return -1;
-            }
-            if (va > vb) {
-                return 1;
-            }
-            return 0;
+            const std::vector<int64_t>& data = dynamic_cast<const ColumnTyped<int64_t>&>(*column).GetData();
+            return [&data](size_t a, size_t b) {
+                if (data[a] < data[b]) {
+                    return -1;
+                }
+                if (data[a] > data[b]) {
+                    return 1;
+                }
+                return 0;
+            };
         }
         case Type::Float: {
-            float va = FromString<float>(a), vb = FromString<float>(b);
-            if (va < vb) {
-                return -1;
-            }
-            if (va > vb) {
-                return 1;
-            }
-            return 0;
+            const std::vector<float>& data = dynamic_cast<const ColumnTyped<float>&>(*column).GetData();
+            return [&data](size_t a, size_t b) {
+                if (data[a] < data[b]) {
+                    return -1;
+                }
+                if (data[a] > data[b]) {
+                    return 1;
+                }
+                return 0;
+            };
         }
         case Type::Double: {
-            double va = FromString<double>(a), vb = FromString<double>(b);
-            if (va < vb) {
-                return -1;
-            }
-            if (va > vb) {
-                return 1;
-            }
-            return 0;
+            const std::vector<double>& data = dynamic_cast<const ColumnTyped<double>&>(*column).GetData();
+            return [&data](size_t a, size_t b) {
+                if (data[a] < data[b]) {
+                    return -1;
+                }
+                if (data[a] > data[b]) {
+                    return 1;
+                }
+                return 0;
+            };
         }
         case Type::Date: {
-            int32_t va = FromString<Date>(a).GetValue(), vb = FromString<Date>(b).GetValue();
-            if (va < vb) {
-                return -1;
-            }
-            if (va > vb) { return 1; }
-            return 0;
+            const std::vector<Date>& data = dynamic_cast<const ColumnTyped<Date>&>(*column).GetData();
+            return [&data](size_t a, size_t b) {
+                if (data[a] < data[b]) {
+                    return -1;
+                }
+                if (data[a] > data[b]) {
+                    return 1;
+                }
+                return 0;
+            };
         }
         case Type::Timestamp: {
-            int64_t va = FromString<Timestamp>(a).GetValue(), vb = FromString<Timestamp>(b).GetValue();
-            if (va < vb) {
-                return -1;
-            }
-            if (va > vb) {
-                return 1;
-            }
-            return 0;
+            const std::vector<Timestamp>& data = dynamic_cast<const ColumnTyped<Timestamp>&>(*column).GetData();
+            return [&data](size_t a, size_t b) {
+                if (data[a] < data[b]) {
+                    return -1;
+                }
+                if (data[a] > data[b]) {
+                    return 1;
+                }
+                return 0;
+            };
         }
         case Type::Char: {
-            char va = FromString<char>(a), vb = FromString<char>(b);
-            if (va < vb) {
-                return -1;
-            }
-            if (va > vb) {
-                return 1;
-            }
-            return 0;
+            const std::vector<char>& data = dynamic_cast<const ColumnTyped<char>&>(*column).GetData();
+            return [&data](size_t a, size_t b) {
+                if (data[a] < data[b]) {
+                    return -1;
+                }
+                if (data[a] > data[b]) {
+                    return 1;
+                }
+                return 0;
+            };
         }
         case Type::String: {
-            if (a < b) {
-                return -1;
-            }
-            if (a > b) {
-                return 1;
-            }
-            return 0;
+            const std::vector<std::string>& data = dynamic_cast<const ColumnTyped<std::string>&>(*column).GetData();
+            return [&data](size_t a, size_t b) {
+                if (data[a] < data[b]) {
+                    return -1;
+                }
+                if (data[a] > data[b]) {
+                    return 1;
+                }
+                return 0;
+            };
         }
         default:
-            throw std::runtime_error("Unsupported type :: CompareStringValues");
+            throw std::runtime_error("Unsupported type :: MakeColumnComparator");
+    }
+}
+
+std::shared_ptr<Column> MakeColumnFromBytes(const std::vector<char>& buf, Type column_type, size_t rows_number) {
+    switch (column_type) {
+        case Type::Int16: {
+            std::vector<int16_t> data(rows_number);
+            std::memcpy(data.data(), buf.data(), rows_number * sizeof(int16_t));
+            return std::make_shared<ColumnTyped<int16_t>>(std::move(data));
+        }
+        case Type::Int32: {
+            std::vector<int32_t> data(rows_number);
+            std::memcpy(data.data(), buf.data(), rows_number * sizeof(int32_t));
+            return std::make_shared<ColumnTyped<int32_t>>(std::move(data));
+        }
+        case Type::Int64: {
+            std::vector<int64_t> data(rows_number);
+            std::memcpy(data.data(), buf.data(), rows_number * sizeof(int64_t));
+            return std::make_shared<ColumnTyped<int64_t>>(std::move(data));
+        }
+        case Type::Float: {
+            std::vector<float> data(rows_number);
+            std::memcpy(data.data(), buf.data(), rows_number * sizeof(float));
+            return std::make_shared<ColumnTyped<float>>(std::move(data));
+        }
+        case Type::Double: {
+            std::vector<double> data(rows_number);
+            std::memcpy(data.data(), buf.data(), rows_number * sizeof(double));
+            return std::make_shared<ColumnTyped<double>>(std::move(data));
+        }
+        case Type::Date: {
+            const int32_t* raw = reinterpret_cast<const int32_t*>(buf.data());
+            std::vector<Date> data;
+            data.reserve(rows_number);
+            for (size_t i = 0; i < rows_number; i++) {
+                data.emplace_back(raw[i]);
+            }
+            return std::make_shared<ColumnTyped<Date>>(std::move(data));
+        }
+        case Type::Timestamp: {
+            const int64_t* raw = reinterpret_cast<const int64_t*>(buf.data());
+            std::vector<Timestamp> data;
+            data.reserve(rows_number);
+            for (size_t i = 0; i < rows_number; i++) {
+                data.emplace_back(raw[i]);
+            }
+            return std::make_shared<ColumnTyped<Timestamp>>(std::move(data));
+        }
+        case Type::Char: {
+            std::vector<char> data(rows_number);
+            std::memcpy(data.data(), buf.data(), rows_number * sizeof(char));
+            return std::make_shared<ColumnTyped<char>>(std::move(data));
+        }
+        case Type::String: {
+            std::vector<std::string> data;
+            data.reserve(rows_number);
+            size_t offset = 0;
+            for (size_t i = 0; i < rows_number; i++) {
+                size_t len;
+                std::memcpy(&len, buf.data() + offset, sizeof(size_t));
+                offset += sizeof(size_t);
+                data.emplace_back(buf.data() + offset, len);
+                offset += len;
+            }
+            return std::make_shared<ColumnTyped<std::string>>(std::move(data));
+        }
+        default:
+            throw std::runtime_error("Unsupported type :: MakeColumnFromBytes");
     }
 }
 
