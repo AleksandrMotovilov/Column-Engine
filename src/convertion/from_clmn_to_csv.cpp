@@ -1,6 +1,4 @@
 #include "src/convertion/from_clmn_to_csv.h"
-#include "src/kernel/reader_writer_clmn.h"
-#include "src/kernel/reader_writer_csv.h"
 
 void ConvertFromClmnToCsv(const std::string& file_clmn, const std::string& file_scheme, const std::string& file_csv) {
     std::cout << "Converting " << file_clmn << " to " << file_csv << " with scheme " << file_scheme << std::endl;

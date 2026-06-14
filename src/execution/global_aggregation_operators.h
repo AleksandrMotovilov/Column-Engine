@@ -6,6 +6,7 @@
 #include "src/execution/aggregation_functions.h"
 #include "src/execution/operators.h"
 #include "src/kernel/batch.h"
+#include "src/kernel/column_utils.h"
 
 class GlobalAggregationOperator : public Operator {
 public:

@@ -5,6 +5,7 @@
 #include <vector>
 #include "src/execution/operators.h"
 #include "src/kernel/batch.h"
+#include "src/kernel/column_utils.h"
 
 class LimitOperator : public Operator {
 public:

@@ -6,6 +6,9 @@
 #include <vector>
 #include "src/execution/operators.h"
 #include "src/kernel/batch.h"
+#include "src/kernel/column_utils.h"
+
+std::shared_ptr<Batch> TopKFromBatch(std::shared_ptr<Batch> batch, size_t k, const std::vector<std::pair<size_t, Type>>& sort_keys, bool descending);
 
 class TopKOperator : public Operator {
 public:

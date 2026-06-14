@@ -7,6 +7,10 @@
 #include "src/kernel/batch.h"
 #include "src/kernel/column.h"
 
+std::pair<std::string, int> ReadWordFromCsv(std::ifstream& fin);
+
+std::pair<std::vector<std::string>, int> ReadRowFromCsv(std::ifstream& fin);
+
 class ReaderCsv {
 public:
     explicit ReaderCsv(const std::string& file_csv, const std::string& file_scheme);

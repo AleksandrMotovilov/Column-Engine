@@ -1,8 +1,6 @@
 #include "src/kernel/reader_writer_clmn.h"
-#include <cstdint>
-#include "src/kernel/encoding.h"
 
-static std::shared_ptr<Column> ReadColumnFromClmn(std::ifstream& fin, Type type, size_t rows_number, size_t flags) {
+std::shared_ptr<Column> ReadColumnFromClmn(std::ifstream& fin, Type type, size_t rows_number, size_t flags) {
     size_t encoded_size;
     fin.read(reinterpret_cast<char*>(&encoded_size), sizeof(size_t));
     std::vector<char> data(encoded_size);
@@ -10,7 +8,7 @@ static std::shared_ptr<Column> ReadColumnFromClmn(std::ifstream& fin, Type type,
     return DecodeColumn(data, type, rows_number, flags);
 }
 
-static void WriteColumnToClmn(std::ofstream& fout, std::shared_ptr<Column> column, Type type, size_t rows_number, size_t flags) {
+void WriteColumnToClmn(std::ofstream& fout, std::shared_ptr<Column> column, Type type, size_t rows_number, size_t flags) {
     std::vector<char> encoded = EncodeColumn(column, type, rows_number, flags);
     size_t encoded_size = encoded.size();
     fout.write(reinterpret_cast<char*>(&encoded_size), sizeof(size_t));

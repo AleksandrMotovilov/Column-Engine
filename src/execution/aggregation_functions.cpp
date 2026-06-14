@@ -1,5 +1,4 @@
 #include "src/execution/aggregation_functions.h"
-#include "src/kernel/column_utils.h"
 
 void CountRowsAggregation::Update(std::shared_ptr<Batch> batch) {
     count_ += static_cast<int64_t>(batch->GetRowsNumber());

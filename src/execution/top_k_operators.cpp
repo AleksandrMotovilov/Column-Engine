@@ -1,7 +1,6 @@
 #include "src/execution/top_k_operators.h"
-#include "src/kernel/column_utils.h"
 
-static std::shared_ptr<Batch> TopKFromBatch(std::shared_ptr<Batch> batch, size_t k, const std::vector<std::pair<size_t, Type>>& sort_keys, bool descending) {
+std::shared_ptr<Batch> TopKFromBatch(std::shared_ptr<Batch> batch, size_t k, const std::vector<std::pair<size_t, Type>>& sort_keys, bool descending) {
     size_t rows_number = batch->GetRowsNumber();
     size_t actual_k = std::min(k, rows_number);
     std::vector<size_t> indices(rows_number);
