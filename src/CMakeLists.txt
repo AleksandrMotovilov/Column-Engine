@@ -86,5 +86,7 @@ add_library(execution
     execution/limit_operators.cpp
     execution/write_operators.cpp
 )
-target_include_directories(execution PUBLIC ${CMAKE_SOURCE_DIR})
-target_link_libraries(execution PUBLIC reader_writer_clmn)
+find_library(RE2_LIB re2 REQUIRED)
+find_path(RE2_INCLUDE_DIR re2/re2.h REQUIRED)
+target_include_directories(execution PUBLIC ${CMAKE_SOURCE_DIR} ${RE2_INCLUDE_DIR})
+target_link_libraries(execution PUBLIC reader_writer_clmn ${RE2_LIB})

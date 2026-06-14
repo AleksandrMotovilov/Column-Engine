@@ -584,7 +584,7 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
                                     std::make_shared<RegexpReplaceExpression>(
                                         "Referer",
                                         R"(^https?://(?:www\.)?([^/]+)/.*$)",
-                                        "$1"
+                                        "\\1"
                                     ),
                                     "k"
                                 ),
