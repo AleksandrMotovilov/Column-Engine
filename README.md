@@ -204,8 +204,8 @@ src/
     types.h / types.cpp              — Type, Date, Timestamp, FromString/ToString/TypeOf
     column.h / column.cpp            — Column, ColumnTyped<T>
     column_utils.h / column_utils.cpp — GetStringValueAt, CopyRowsTyped,
-                                        MakeSingleValueColumn, MakeColumnFromStrings,
-                                        CompareStringValues
+                                        MakeColumnFromStrings, MakeColumnComparator,
+                                        MakeColumnFromBytes, MergeBatchesByRows
     schema.h / schema.cpp            — Schema
     batch.h / batch.cpp              — Batch, kColumnBatchSize, kRowBatchSize, SetBatchSize
     encoding.h / encoding.cpp        — EncodeColumn / DecodeColumn, GetCompressionFlags,
