@@ -1,7 +1,7 @@
 #include "src/kernel/reader_writer_csv.h"
 #include "src/kernel/column_utils.h"
 
-static std::pair<std::string, int> ReadWordFromCsv(std::ifstream& fin) {
+std::pair<std::string, int> ReadWordFromCsv(std::ifstream& fin) {
     int mode = 0;
     std::string s;
     int d;
@@ -39,7 +39,7 @@ static std::pair<std::string, int> ReadWordFromCsv(std::ifstream& fin) {
     return {s, d};
 }
 
-static std::pair<std::vector<std::string>, int> ReadRowFromCsv(std::ifstream& fin) {
+std::pair<std::vector<std::string>, int> ReadRowFromCsv(std::ifstream& fin) {
     std::vector<std::string> row;
     int mode = 0;
     std::string s;

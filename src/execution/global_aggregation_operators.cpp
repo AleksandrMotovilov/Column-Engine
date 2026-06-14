@@ -1,5 +1,4 @@
 #include "src/execution/global_aggregation_operators.h"
-#include "src/kernel/column_utils.h"
 
 GlobalAggregationOperator::GlobalAggregationOperator(std::shared_ptr<Operator> next, std::vector<std::shared_ptr<AggregationFunction>> aggregations) {
     next_ = std::move(next);

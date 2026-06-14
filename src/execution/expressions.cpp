@@ -692,9 +692,8 @@ Type LengthExpression::GetType() const {
     return Type::Int64;
 }
 
-RegexpReplaceExpression::RegexpReplaceExpression(std::string column_name, std::string pattern, std::string replacement) {
+RegexpReplaceExpression::RegexpReplaceExpression(std::string column_name, std::string pattern, std::string replacement) : re_(pattern) {
     column_name_ = std::move(column_name);
-    pattern_ = std::regex(pattern);
     replacement_ = std::move(replacement);
 }
 
@@ -707,7 +706,8 @@ std::shared_ptr<Column> RegexpReplaceExpression::Eval(std::shared_ptr<Batch> bat
     size_t rows_number = batch->GetRowsNumber();
     std::vector<std::string> result(rows_number);
     for (size_t i = 0; i < rows_number; i++) {
-        result[i] = std::regex_replace(column_data[i], pattern_, replacement_);
+        result[i] = column_data[i];
+        RE2::Replace(&result[i], re_, replacement_);
     }
     return std::make_shared<ColumnTyped<std::string>>(std::move(result));
 }

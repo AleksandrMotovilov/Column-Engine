@@ -409,7 +409,7 @@ TEST(Expressions, RegexpReplace) {
         {"ref"},
         {{"http://www.google.com/search", "https://example.org/page/1", "http://test.com/x"}}
     );
-    RegexpReplaceExpression expr("ref", R"(^https?://(?:www\.)?([^/]+)/.*$)", "$1");
+    RegexpReplaceExpression expr("ref", R"(^https?://(?:www\.)?([^/]+)/.*$)", "\\1");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 3u);
     EXPECT_EQ(GetResultValue(result.get(), 0), "google.com");
@@ -426,7 +426,7 @@ TEST(Expressions, RegexpReplace_no_match) {
         {"ref"},
         {{"not_a_url", "also_not"}}
     );
-    RegexpReplaceExpression expr("ref", R"(^https?://(?:www\.)?([^/]+)/.*$)", "$1");
+    RegexpReplaceExpression expr("ref", R"(^https?://(?:www\.)?([^/]+)/.*$)", "\\1");
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 2u);
     EXPECT_EQ(GetResultValue(result.get(), 0), "not_a_url");
@@ -437,7 +437,7 @@ TEST(Expressions, RegexpReplace_column_not_found) {
     SetBatchSize(2, 2);
 
     std::shared_ptr<Batch> batch = MakeBatch(2, {Type::String}, {"x"}, {{"a", "b"}});
-    RegexpReplaceExpression expr("missing", ".*", "$0");
+    RegexpReplaceExpression expr("missing", ".*", "\\0");
     EXPECT_THROW(expr.Eval(batch), std::runtime_error);
 }
 

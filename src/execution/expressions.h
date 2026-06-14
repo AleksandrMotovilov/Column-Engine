@@ -1,9 +1,9 @@
 #pragma once
 
 #include <memory>
-#include <regex>
 #include <stdexcept>
 #include <string>
+#include <re2/re2.h>
 #include "src/kernel/batch.h"
 
 class Expression {
@@ -140,7 +140,7 @@ public:
 
 private:
     std::string column_name_;
-    std::regex pattern_;
+    RE2 re_;
     std::string replacement_;
 };
 

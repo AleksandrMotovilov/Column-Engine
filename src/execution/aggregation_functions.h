@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include "src/kernel/batch.h"
 #include "src/kernel/column.h"
+#include "src/kernel/column_utils.h"
 
 class AggregationFunction {
 public:

@@ -4,7 +4,13 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <cstdint>
 #include "src/kernel/batch.h"
+#include "src/kernel/encoding.h"
+
+std::shared_ptr<Column> ReadColumnFromClmn(std::ifstream& fin, Type type, size_t rows_number, size_t flags);
+
+void WriteColumnToClmn(std::ofstream& fout, std::shared_ptr<Column> column, Type type, size_t rows_number, size_t flags);
 
 class ReaderClmn {
 public:

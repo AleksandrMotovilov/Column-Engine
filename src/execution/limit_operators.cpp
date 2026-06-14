@@ -1,5 +1,4 @@
 #include "src/execution/limit_operators.h"
-#include "src/kernel/column_utils.h"
 
 LimitOperator::LimitOperator(std::shared_ptr<Operator> next, size_t limit) {
     next_ = std::move(next);

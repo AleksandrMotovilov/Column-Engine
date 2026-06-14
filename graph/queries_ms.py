@@ -66,7 +66,7 @@ avg = sum(values) / len(values) if values else 0.0
 x = np.arange(len(labels))
 
 fig, ax = plt.subplots(figsize=(18, 10))
-bars = ax.bar(x, values, color="steelblue", edgecolor="white", linewidth=0.5,
+bars = ax.bar(x, values, color="#2c3e50", edgecolor="white", linewidth=0.5,
               label=f"Column-Engine (avg {avg:.1f} ms)")
 
 ax.set_xticks(x)

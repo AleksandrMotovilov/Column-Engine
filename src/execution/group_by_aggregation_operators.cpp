@@ -1,5 +1,4 @@
 #include "src/execution/group_by_aggregation_operators.h"
-#include "src/kernel/column_utils.h"
 
 struct VectorStringHash {
     size_t operator()(const std::vector<std::string>& v) const

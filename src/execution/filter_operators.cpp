@@ -1,5 +1,4 @@
 #include "src/execution/filter_operators.h"
-#include "src/kernel/column_utils.h"
 
 FilterOperator::FilterOperator(std::shared_ptr<Operator> next, std::shared_ptr<Expression> predicate) {
     next_ = std::move(next);
