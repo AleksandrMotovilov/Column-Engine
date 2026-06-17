@@ -56,7 +56,7 @@
 | `ENABLE_BITPACK_INT`   | ON | Int16/Int32/Int64/Char/Date/Timestamp | Bit-packing значений и счётчиков RLE/Dict |
 | `ENABLE_BITPACK_FLOAT` | ON | Float/Double | Bit-packing для RLE/Dict вещественных |
 | `ENABLE_BITPACK_STR`   | ON | String | Bit-packing uint32-кодов Dictionary |
-| `ENABLE_LZ4`        | ON  | все | LZ4 поверх закодированных байт: `[uncompressed_size][compressed_size][bytes]` |
+| `ENABLE_LZ4`        | ON  | все | LZ4 поверх закодированных байт |
 | `ENABLE_ADAPTIVE`   | ON  | все целые, Float, String | Адаптивный выбор кодирования per-column в рантайме (игнорирует остальные флаги, кроме lz4) |
 
 Изменить флаги и пересобрать:
@@ -202,22 +202,23 @@ deactivate
 src/
   kernel/
     types.h / types.cpp              — Type, Date, Timestamp, FromString/ToString/TypeOf
-    column.h / column.cpp            — Column, ColumnTyped<T>
+    column.h                         — Column, ColumnTyped<T>
     column_utils.h / column_utils.cpp — GetStringValueAt, CopyRowsTyped,
                                         MakeColumnFromStrings, MakeColumnComparator,
                                         MakeColumnFromBytes, MergeBatchesByRows
     schema.h / schema.cpp            — Schema
     batch.h / batch.cpp              — Batch, kColumnBatchSize, kRowBatchSize, SetBatchSize
+    reader_writer_clmn.h / .cpp      — ReaderClmn, WriterClmn
+    reader_writer_csv.h / .cpp       — ReaderCsv, WriterCsv
+  compression/
     encoding.h / encoding.cpp        — EncodeColumn / DecodeColumn, GetCompressionFlags,
                                        EncodeIntegerVector, EncodeFloatVector, EncodeStringVector
     encoding_bitpack.h / .cpp        — BitsRequired, BitPackUnsigned, BitUnpackUnsigned
     encoding_lz4.h / .cpp            — Lz4Compress, Lz4Decompress
-    encoding_base.h / .cpp             — ElementValueSize, WriteValues, ReadValues
+    encoding_base.h / .cpp           — ElementValueSize, WriteValues, ReadValues
     encoding_delta.h                 — DoDelta, UndoDelta, EncodeDelta, DecodeDelta (header-only)
     encoding_rle.h                   — EncodeRle, DecodeRle, EstimateRle (header-only)
     encoding_dict.h                  — EncodeDict, DecodeDict, EstimateDict (header-only)
-    reader_writer_clmn.h / .cpp      — ReaderClmn, WriterClmn
-    reader_writer_csv.h / .cpp       — ReaderCsv, WriterCsv
   convertion/
     from_csv_to_clmn.h / .cpp        — Конвертер .csv → .clmn
     from_clmn_to_csv.h / .cpp        — Конвертер .clmn → .csv
