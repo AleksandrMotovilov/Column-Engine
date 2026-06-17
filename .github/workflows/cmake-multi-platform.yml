@@ -11,8 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: fetch dependencies
-      run: sudo apt-get install libgtest-dev clang-format clang-tidy
+
+    - name: install dependencies
+      run: sudo apt-get install -y liblz4-dev libre2-dev libboost-dev libabsl-dev
 
     - name: cmake
       run: |
@@ -25,9 +26,6 @@ jobs:
         cd build
         make
 
-    - name: install lz4 re2
-      run: sudo apt-get install -y liblz4-dev libre2-dev
-
     - name: test
       run: |
         cd build
@@ -36,5 +34,3 @@ jobs:
         ./tests/test_aggregation_functions
         ./tests/test_expressions
         ./tests/test_compression
-
-
