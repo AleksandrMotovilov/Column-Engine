@@ -1,4 +1,4 @@
-#include "src/execution/top_k_operators.h"
+#include "src/execution/top_k_operator.h"
 
 std::shared_ptr<Batch> TopKFromBatch(std::shared_ptr<Batch> batch, size_t k, const std::vector<std::pair<size_t, Type>>& sort_keys, bool descending) {
     size_t rows_number = batch->GetRowsNumber();

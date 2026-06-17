@@ -1,4 +1,4 @@
-#include "src/execution/group_by_aggregation_operators.h"
+#include "src/execution/group_by_aggregation_operator.h"
 
 size_t VectorCharHash::operator()(const std::vector<char>& v) const {
     size_t seed = v.size();
@@ -11,54 +11,54 @@ size_t VectorCharHash::operator()(const std::vector<char>& v) const {
 void AppendToKey(std::vector<char>& key, std::shared_ptr<Column> column, Type type, size_t index) {
     switch (type) {
         case Type::Int16: {
-            int16_t value = dynamic_cast<const ColumnTyped<int16_t>&>(*column).GetData()[index];
+            int16_t value = static_cast<const ColumnTyped<int16_t>&>(*column).GetData()[index];
             const char* ptr = reinterpret_cast<const char*>(&value);
             key.insert(key.end(), ptr, ptr + sizeof(int16_t));
             break;
         }
         case Type::Int32: {
-            int32_t value = dynamic_cast<const ColumnTyped<int32_t>&>(*column).GetData()[index];
+            int32_t value = static_cast<const ColumnTyped<int32_t>&>(*column).GetData()[index];
             const char* ptr = reinterpret_cast<const char*>(&value);
             key.insert(key.end(), ptr, ptr + sizeof(int32_t));
             break;
         }
         case Type::Int64: {
-            int64_t value = dynamic_cast<const ColumnTyped<int64_t>&>(*column).GetData()[index];
+            int64_t value = static_cast<const ColumnTyped<int64_t>&>(*column).GetData()[index];
             const char* ptr = reinterpret_cast<const char*>(&value);
             key.insert(key.end(), ptr, ptr + sizeof(int64_t));
             break;
         }
         case Type::Float: {
-            float value = dynamic_cast<const ColumnTyped<float>&>(*column).GetData()[index];
+            float value = static_cast<const ColumnTyped<float>&>(*column).GetData()[index];
             const char* ptr = reinterpret_cast<const char*>(&value);
             key.insert(key.end(), ptr, ptr + sizeof(float));
             break;
         }
         case Type::Double: {
-            double value = dynamic_cast<const ColumnTyped<double>&>(*column).GetData()[index];
+            double value = static_cast<const ColumnTyped<double>&>(*column).GetData()[index];
             const char* ptr = reinterpret_cast<const char*>(&value);
             key.insert(key.end(), ptr, ptr + sizeof(double));
             break;
         }
         case Type::Date: {
-            int32_t value = dynamic_cast<const ColumnTyped<Date>&>(*column).GetData()[index].GetValue();
+            int32_t value = static_cast<const ColumnTyped<Date>&>(*column).GetData()[index].GetValue();
             const char* ptr = reinterpret_cast<const char*>(&value);
             key.insert(key.end(), ptr, ptr + sizeof(int32_t));
             break;
         }
         case Type::Timestamp: {
-            int64_t value = dynamic_cast<const ColumnTyped<Timestamp>&>(*column).GetData()[index].GetValue();
+            int64_t value = static_cast<const ColumnTyped<Timestamp>&>(*column).GetData()[index].GetValue();
             const char* ptr = reinterpret_cast<const char*>(&value);
             key.insert(key.end(), ptr, ptr + sizeof(int64_t));
             break;
         }
         case Type::Char: {
-            char value = dynamic_cast<const ColumnTyped<char>&>(*column).GetData()[index];
+            char value = static_cast<const ColumnTyped<char>&>(*column).GetData()[index];
             key.push_back(value);
             break;
         }
         case Type::String: {
-            const std::string& s = dynamic_cast<const ColumnTyped<std::string>&>(*column).GetData()[index];
+            const std::string& s = static_cast<const ColumnTyped<std::string>&>(*column).GetData()[index];
             size_t len = s.size();
             key.insert(key.end(), reinterpret_cast<const char*>(&len), reinterpret_cast<const char*>(&len) + sizeof(size_t));
             key.insert(key.end(), s.begin(), s.end());
@@ -131,7 +131,7 @@ std::shared_ptr<Batch> GroupByAggregationOperator::Next() {
     }
     std::shared_ptr<Schema> sub_schema = std::make_shared<Schema>(std::move(sub_column_names), std::move(sub_column_types));
     
-    std::unordered_map<std::vector<char>, size_t, VectorCharHash> key_to_index;
+    GroupByMap key_to_index;
     std::vector<size_t> group_representative_rows;
     std::vector<std::vector<size_t>> group_row_indices;
     std::vector<char> key;

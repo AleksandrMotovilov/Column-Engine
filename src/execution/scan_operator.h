@@ -4,8 +4,8 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include "src/execution/operators.h"
-#include "src/kernel/reader_writer_clmn.h"
+#include "src/execution/operator.h"
+#include "src/convertion/reader_writer_clmn.h"
 
 class ScanOperator : public Operator {
 public:

@@ -4,56 +4,56 @@ __int128 ComputeColumnSum(std::shared_ptr<Column> column, Type type) {
     __int128 sum = 0;
     switch (type) {
         case Type::Int16: {
-            const std::vector<int16_t>& data = dynamic_cast<const ColumnTyped<int16_t>&>(*column).GetData();
+            const std::vector<int16_t>& data = static_cast<const ColumnTyped<int16_t>&>(*column).GetData();
             for (int16_t value : data) {
                 sum += static_cast<__int128>(value);
             }
             break;
         }
         case Type::Int32: {
-            const std::vector<int32_t>& data = dynamic_cast<const ColumnTyped<int32_t>&>(*column).GetData();
+            const std::vector<int32_t>& data = static_cast<const ColumnTyped<int32_t>&>(*column).GetData();
             for (int32_t value : data) {
                 sum += static_cast<__int128>(value);
             }
             break;
         }
         case Type::Int64: {
-            const std::vector<int64_t>& data = dynamic_cast<const ColumnTyped<int64_t>&>(*column).GetData();
+            const std::vector<int64_t>& data = static_cast<const ColumnTyped<int64_t>&>(*column).GetData();
             for (int64_t value : data) {
                 sum += static_cast<__int128>(value);
             }
             break;
         }
         case Type::Float: {
-            const std::vector<float>& data = dynamic_cast<const ColumnTyped<float>&>(*column).GetData();
+            const std::vector<float>& data = static_cast<const ColumnTyped<float>&>(*column).GetData();
             for (float value : data) {
                 sum += static_cast<__int128>(value);
             }
             break;
         }
         case Type::Double: {
-            const std::vector<double>& data = dynamic_cast<const ColumnTyped<double>&>(*column).GetData();
+            const std::vector<double>& data = static_cast<const ColumnTyped<double>&>(*column).GetData();
             for (double value : data) {
                 sum += static_cast<__int128>(value);
             }
             break;
         }
         case Type::Date: {
-            const std::vector<Date>& data = dynamic_cast<const ColumnTyped<Date>&>(*column).GetData();
+            const std::vector<Date>& data = static_cast<const ColumnTyped<Date>&>(*column).GetData();
             for (const Date& value : data) {
                 sum += static_cast<__int128>(value.GetValue());
             }
             break;
         }
         case Type::Timestamp: {
-            const std::vector<Timestamp>& data = dynamic_cast<const ColumnTyped<Timestamp>&>(*column).GetData();
+            const std::vector<Timestamp>& data = static_cast<const ColumnTyped<Timestamp>&>(*column).GetData();
             for (const Timestamp& value : data) {
                 sum += static_cast<__int128>(value.GetValue());
             }
             break;
         }
         case Type::Char: {
-            const std::vector<char>& data = dynamic_cast<const ColumnTyped<char>&>(*column).GetData();
+            const std::vector<char>& data = static_cast<const ColumnTyped<char>&>(*column).GetData();
             for (char value : data) {
                 sum += static_cast<__int128>(value);
             }
@@ -95,7 +95,7 @@ void CountDistinctAggregationTyped<Date>::Update(std::shared_ptr<Batch> batch) {
     if (index == batch->GetColumnsNumber()) {
         throw std::runtime_error("Column not found: " + column_name_ + " :: CountDistinctAggregation");
     }
-    const std::vector<Date>& column_data = dynamic_cast<const ColumnTyped<Date>&>(*batch->GetColumn(index)).GetData();
+    const std::vector<Date>& column_data = static_cast<const ColumnTyped<Date>&>(*batch->GetColumn(index)).GetData();
     for (const Date& value : column_data) {
         values_.insert(value.GetValue());
     }
@@ -128,7 +128,7 @@ void CountDistinctAggregationTyped<Timestamp>::Update(std::shared_ptr<Batch> bat
     if (index == batch->GetColumnsNumber()) {
         throw std::runtime_error("Column not found: " + column_name_ + " :: CountDistinctAggregation");
     }
-    const std::vector<Timestamp>& column_data = dynamic_cast<const ColumnTyped<Timestamp>&>(*batch->GetColumn(index)).GetData();
+    const std::vector<Timestamp>& column_data = static_cast<const ColumnTyped<Timestamp>&>(*batch->GetColumn(index)).GetData();
     for (const Timestamp& value : column_data) {
         values_.insert(value.GetValue());
     }

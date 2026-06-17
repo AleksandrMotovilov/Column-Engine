@@ -25,9 +25,16 @@ jobs:
         cd build
         make
 
+    - name: install lz4 re2
+      run: sudo apt-get install -y liblz4-dev libre2-dev
+
     - name: test
       run: |
         cd build
         ./tests/test_convertion
+        ./tests/test_queries
+        ./tests/test_aggregation_functions
+        ./tests/test_expressions
+        ./tests/test_compression
 
 

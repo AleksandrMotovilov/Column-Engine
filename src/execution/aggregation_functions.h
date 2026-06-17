@@ -43,7 +43,7 @@ public:
         if (index == batch->GetColumnsNumber()) {
             throw std::runtime_error("Column not found: " + column_name_ + " :: CountDistinctAggregation");
         }
-        const std::vector<T>& column_data = dynamic_cast<const ColumnTyped<T>&>(*batch->GetColumn(index)).GetData();
+        const std::vector<T>& column_data = static_cast<const ColumnTyped<T>&>(*batch->GetColumn(index)).GetData();
         for (const T& value : column_data) {
             values_.insert(value);
         }
@@ -172,7 +172,7 @@ public:
         if (index == batch->GetColumnsNumber()) {
             throw std::runtime_error("Column not found: " + column_name_ + " :: MinAggregation");
         }
-        const std::vector<T>& data = dynamic_cast<const ColumnTyped<T>&>(*batch->GetColumn(index)).GetData();
+        const std::vector<T>& data = static_cast<const ColumnTyped<T>&>(*batch->GetColumn(index)).GetData();
         for (const T& value : data) {
             if (!min_value_.has_value() || value < *min_value_) {
                 min_value_ = value;
@@ -241,7 +241,7 @@ public:
         if (index == batch->GetColumnsNumber()) {
             throw std::runtime_error("Column not found: " + column_name_ + " :: MaxAggregation");
         }
-        const std::vector<T>& data = dynamic_cast<const ColumnTyped<T>&>(*batch->GetColumn(index)).GetData();
+        const std::vector<T>& data = static_cast<const ColumnTyped<T>&>(*batch->GetColumn(index)).GetData();
         for (const T& value : data) {
             if (!max_value_.has_value() || value > *max_value_) {
                 max_value_ = value;

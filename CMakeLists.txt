@@ -22,6 +22,9 @@ option(ENABLE_BITPACK_STR   "Enable Bit-Packing for strings"                   O
 option(ENABLE_LZ4           "Enable LZ4 block compression"                     ON)
 option(ENABLE_ADAPTIVE      "Enable adaptive per-column compression selection" ON)
 
+set(GROUP_BY_MAP "BOOST_FLAT" CACHE STRING
+    "Hash map for GroupByAggregationOperator [STD|BOOST_UNORDERED|BOOST_FLAT|BOOST_NODE|ABSL_FLAT|ABSL_NODE]")
+
 include(FetchContent)
 
 if(BUILD_TESTS)

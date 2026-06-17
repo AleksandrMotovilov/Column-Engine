@@ -3,23 +3,23 @@
 std::string GetStringValueAt(std::shared_ptr<Column> column, Type column_type, size_t index) {
     switch (column_type) {
         case Type::Int16:
-            return ToString<int16_t>(dynamic_cast<const ColumnTyped<int16_t>&>(*column).GetData()[index]);
+            return ToString<int16_t>(static_cast<const ColumnTyped<int16_t>&>(*column).GetData()[index]);
         case Type::Int32:
-            return ToString<int32_t>(dynamic_cast<const ColumnTyped<int32_t>&>(*column).GetData()[index]);
+            return ToString<int32_t>(static_cast<const ColumnTyped<int32_t>&>(*column).GetData()[index]);
         case Type::Int64:
-            return ToString<int64_t>(dynamic_cast<const ColumnTyped<int64_t>&>(*column).GetData()[index]);
+            return ToString<int64_t>(static_cast<const ColumnTyped<int64_t>&>(*column).GetData()[index]);
         case Type::Float:
-            return ToString<float>(dynamic_cast<const ColumnTyped<float>&>(*column).GetData()[index]);
+            return ToString<float>(static_cast<const ColumnTyped<float>&>(*column).GetData()[index]);
         case Type::Double:
-            return ToString<double>(dynamic_cast<const ColumnTyped<double>&>(*column).GetData()[index]);
+            return ToString<double>(static_cast<const ColumnTyped<double>&>(*column).GetData()[index]);
         case Type::Date:
-            return ToString<Date>(dynamic_cast<const ColumnTyped<Date>&>(*column).GetData()[index]);
+            return ToString<Date>(static_cast<const ColumnTyped<Date>&>(*column).GetData()[index]);
         case Type::Timestamp:
-            return ToString<Timestamp>(dynamic_cast<const ColumnTyped<Timestamp>&>(*column).GetData()[index]);
+            return ToString<Timestamp>(static_cast<const ColumnTyped<Timestamp>&>(*column).GetData()[index]);
         case Type::Char:
-            return ToString<char>(dynamic_cast<const ColumnTyped<char>&>(*column).GetData()[index]);
+            return ToString<char>(static_cast<const ColumnTyped<char>&>(*column).GetData()[index]);
         case Type::String:
-            return dynamic_cast<const ColumnTyped<std::string>&>(*column).GetData()[index];
+            return static_cast<const ColumnTyped<std::string>&>(*column).GetData()[index];
         default:
             throw std::runtime_error("Unsupported type :: GetStringValueAt");
     }
@@ -28,7 +28,7 @@ std::string GetStringValueAt(std::shared_ptr<Column> column, Type column_type, s
 std::shared_ptr<Column> CopyRowsTyped(std::shared_ptr<Column> column, Type column_type, const std::vector<size_t>& indices) {
     switch (column_type) {
         case Type::Int16: {
-            const std::vector<int16_t>& raw = dynamic_cast<const ColumnTyped<int16_t>&>(*column).GetData();
+            const std::vector<int16_t>& raw = static_cast<const ColumnTyped<int16_t>&>(*column).GetData();
             std::vector<int16_t> column_data;
             column_data.reserve(indices.size());
             for (size_t i : indices) {
@@ -37,7 +37,7 @@ std::shared_ptr<Column> CopyRowsTyped(std::shared_ptr<Column> column, Type colum
             return std::make_shared<ColumnTyped<int16_t>>(std::move(column_data));
         }
         case Type::Int32: {
-            const std::vector<int32_t>& raw = dynamic_cast<const ColumnTyped<int32_t>&>(*column).GetData();
+            const std::vector<int32_t>& raw = static_cast<const ColumnTyped<int32_t>&>(*column).GetData();
             std::vector<int32_t> column_data;
             column_data.reserve(indices.size());
             for (size_t i : indices) {
@@ -46,7 +46,7 @@ std::shared_ptr<Column> CopyRowsTyped(std::shared_ptr<Column> column, Type colum
             return std::make_shared<ColumnTyped<int32_t>>(std::move(column_data));
         }
         case Type::Int64: {
-            const std::vector<int64_t>& raw = dynamic_cast<const ColumnTyped<int64_t>&>(*column).GetData();
+            const std::vector<int64_t>& raw = static_cast<const ColumnTyped<int64_t>&>(*column).GetData();
             std::vector<int64_t> column_data;
             column_data.reserve(indices.size());
             for (size_t i : indices) {
@@ -55,7 +55,7 @@ std::shared_ptr<Column> CopyRowsTyped(std::shared_ptr<Column> column, Type colum
             return std::make_shared<ColumnTyped<int64_t>>(std::move(column_data));
         }
         case Type::Float: {
-            const std::vector<float>& raw = dynamic_cast<const ColumnTyped<float>&>(*column).GetData();
+            const std::vector<float>& raw = static_cast<const ColumnTyped<float>&>(*column).GetData();
             std::vector<float> column_data;
             column_data.reserve(indices.size());
             for (size_t i : indices) {
@@ -64,7 +64,7 @@ std::shared_ptr<Column> CopyRowsTyped(std::shared_ptr<Column> column, Type colum
             return std::make_shared<ColumnTyped<float>>(std::move(column_data));
         }
         case Type::Double: {
-            const std::vector<double>& raw = dynamic_cast<const ColumnTyped<double>&>(*column).GetData();
+            const std::vector<double>& raw = static_cast<const ColumnTyped<double>&>(*column).GetData();
             std::vector<double> column_data;
             column_data.reserve(indices.size());
             for (size_t i : indices) {
@@ -73,7 +73,7 @@ std::shared_ptr<Column> CopyRowsTyped(std::shared_ptr<Column> column, Type colum
             return std::make_shared<ColumnTyped<double>>(std::move(column_data));
         }
         case Type::Date: {
-            const std::vector<Date>& raw = dynamic_cast<const ColumnTyped<Date>&>(*column).GetData();
+            const std::vector<Date>& raw = static_cast<const ColumnTyped<Date>&>(*column).GetData();
             std::vector<Date> column_data;
             column_data.reserve(indices.size());
             for (size_t i : indices) {
@@ -82,7 +82,7 @@ std::shared_ptr<Column> CopyRowsTyped(std::shared_ptr<Column> column, Type colum
             return std::make_shared<ColumnTyped<Date>>(std::move(column_data));
         }
         case Type::Timestamp: {
-            const std::vector<Timestamp>& raw = dynamic_cast<const ColumnTyped<Timestamp>&>(*column).GetData();
+            const std::vector<Timestamp>& raw = static_cast<const ColumnTyped<Timestamp>&>(*column).GetData();
             std::vector<Timestamp> column_data;
             column_data.reserve(indices.size());
             for (size_t i : indices) {
@@ -91,7 +91,7 @@ std::shared_ptr<Column> CopyRowsTyped(std::shared_ptr<Column> column, Type colum
             return std::make_shared<ColumnTyped<Timestamp>>(std::move(column_data));
         }
         case Type::Char: {
-            const std::vector<char>& raw = dynamic_cast<const ColumnTyped<char>&>(*column).GetData();
+            const std::vector<char>& raw = static_cast<const ColumnTyped<char>&>(*column).GetData();
             std::vector<char> column_data;
             column_data.reserve(indices.size());
             for (size_t i : indices) {
@@ -100,7 +100,7 @@ std::shared_ptr<Column> CopyRowsTyped(std::shared_ptr<Column> column, Type colum
             return std::make_shared<ColumnTyped<char>>(std::move(column_data));
         }
         case Type::String: {
-            const std::vector<std::string>& raw = dynamic_cast<const ColumnTyped<std::string>&>(*column).GetData();
+            const std::vector<std::string>& raw = static_cast<const ColumnTyped<std::string>&>(*column).GetData();
             std::vector<std::string> column_data;
             column_data.reserve(indices.size());
             for (size_t i : indices) {
@@ -192,7 +192,7 @@ std::shared_ptr<Column> MakeColumnFromStrings(Type column_type, const std::vecto
 std::function<int(size_t, size_t)> MakeColumnComparator(std::shared_ptr<Column> column, Type column_type) {
     switch (column_type) {
         case Type::Int16: {
-            const std::vector<int16_t>& data = dynamic_cast<const ColumnTyped<int16_t>&>(*column).GetData();
+            const std::vector<int16_t>& data = static_cast<const ColumnTyped<int16_t>&>(*column).GetData();
             return [&data](size_t a, size_t b) {
                 if (data[a] < data[b]) {
                     return -1;
@@ -204,7 +204,7 @@ std::function<int(size_t, size_t)> MakeColumnComparator(std::shared_ptr<Column> 
             };
         }
         case Type::Int32: {
-            const std::vector<int32_t>& data = dynamic_cast<const ColumnTyped<int32_t>&>(*column).GetData();
+            const std::vector<int32_t>& data = static_cast<const ColumnTyped<int32_t>&>(*column).GetData();
             return [&data](size_t a, size_t b) {
                 if (data[a] < data[b]) {
                     return -1;
@@ -216,7 +216,7 @@ std::function<int(size_t, size_t)> MakeColumnComparator(std::shared_ptr<Column> 
             };
         }
         case Type::Int64: {
-            const std::vector<int64_t>& data = dynamic_cast<const ColumnTyped<int64_t>&>(*column).GetData();
+            const std::vector<int64_t>& data = static_cast<const ColumnTyped<int64_t>&>(*column).GetData();
             return [&data](size_t a, size_t b) {
                 if (data[a] < data[b]) {
                     return -1;
@@ -228,7 +228,7 @@ std::function<int(size_t, size_t)> MakeColumnComparator(std::shared_ptr<Column> 
             };
         }
         case Type::Float: {
-            const std::vector<float>& data = dynamic_cast<const ColumnTyped<float>&>(*column).GetData();
+            const std::vector<float>& data = static_cast<const ColumnTyped<float>&>(*column).GetData();
             return [&data](size_t a, size_t b) {
                 if (data[a] < data[b]) {
                     return -1;
@@ -240,7 +240,7 @@ std::function<int(size_t, size_t)> MakeColumnComparator(std::shared_ptr<Column> 
             };
         }
         case Type::Double: {
-            const std::vector<double>& data = dynamic_cast<const ColumnTyped<double>&>(*column).GetData();
+            const std::vector<double>& data = static_cast<const ColumnTyped<double>&>(*column).GetData();
             return [&data](size_t a, size_t b) {
                 if (data[a] < data[b]) {
                     return -1;
@@ -252,7 +252,7 @@ std::function<int(size_t, size_t)> MakeColumnComparator(std::shared_ptr<Column> 
             };
         }
         case Type::Date: {
-            const std::vector<Date>& data = dynamic_cast<const ColumnTyped<Date>&>(*column).GetData();
+            const std::vector<Date>& data = static_cast<const ColumnTyped<Date>&>(*column).GetData();
             return [&data](size_t a, size_t b) {
                 if (data[a] < data[b]) {
                     return -1;
@@ -264,7 +264,7 @@ std::function<int(size_t, size_t)> MakeColumnComparator(std::shared_ptr<Column> 
             };
         }
         case Type::Timestamp: {
-            const std::vector<Timestamp>& data = dynamic_cast<const ColumnTyped<Timestamp>&>(*column).GetData();
+            const std::vector<Timestamp>& data = static_cast<const ColumnTyped<Timestamp>&>(*column).GetData();
             return [&data](size_t a, size_t b) {
                 if (data[a] < data[b]) {
                     return -1;
@@ -276,7 +276,7 @@ std::function<int(size_t, size_t)> MakeColumnComparator(std::shared_ptr<Column> 
             };
         }
         case Type::Char: {
-            const std::vector<char>& data = dynamic_cast<const ColumnTyped<char>&>(*column).GetData();
+            const std::vector<char>& data = static_cast<const ColumnTyped<char>&>(*column).GetData();
             return [&data](size_t a, size_t b) {
                 if (data[a] < data[b]) {
                     return -1;
@@ -288,7 +288,7 @@ std::function<int(size_t, size_t)> MakeColumnComparator(std::shared_ptr<Column> 
             };
         }
         case Type::String: {
-            const std::vector<std::string>& data = dynamic_cast<const ColumnTyped<std::string>&>(*column).GetData();
+            const std::vector<std::string>& data = static_cast<const ColumnTyped<std::string>&>(*column).GetData();
             return [&data](size_t a, size_t b) {
                 if (data[a] < data[b]) {
                     return -1;
@@ -390,7 +390,7 @@ std::shared_ptr<Batch> MergeBatchesByRows(const std::vector<std::shared_ptr<Batc
                 std::vector<int16_t> column_data;
                 column_data.reserve(total_rows);
                 for (const std::shared_ptr<Batch>& batch : batches) {
-                    const std::vector<int16_t>& src = dynamic_cast<const ColumnTyped<int16_t>&>(*batch->GetColumn(column_index)).GetData();
+                    const std::vector<int16_t>& src = static_cast<const ColumnTyped<int16_t>&>(*batch->GetColumn(column_index)).GetData();
                     column_data.insert(column_data.end(), src.begin(), src.end());
                 }
                 merged_columns.push_back(std::make_shared<ColumnTyped<int16_t>>(std::move(column_data)));
@@ -400,7 +400,7 @@ std::shared_ptr<Batch> MergeBatchesByRows(const std::vector<std::shared_ptr<Batc
                 std::vector<int32_t> column_data;
                 column_data.reserve(total_rows);
                 for (const std::shared_ptr<Batch>& batch : batches) {
-                    const std::vector<int32_t>& src = dynamic_cast<const ColumnTyped<int32_t>&>(*batch->GetColumn(column_index)).GetData();
+                    const std::vector<int32_t>& src = static_cast<const ColumnTyped<int32_t>&>(*batch->GetColumn(column_index)).GetData();
                     column_data.insert(column_data.end(), src.begin(), src.end());
                 }
                 merged_columns.push_back(std::make_shared<ColumnTyped<int32_t>>(std::move(column_data)));
@@ -410,7 +410,7 @@ std::shared_ptr<Batch> MergeBatchesByRows(const std::vector<std::shared_ptr<Batc
                 std::vector<int64_t> column_data;
                 column_data.reserve(total_rows);
                 for (const std::shared_ptr<Batch>& batch : batches) {
-                    const std::vector<int64_t>& src = dynamic_cast<const ColumnTyped<int64_t>&>(*batch->GetColumn(column_index)).GetData();
+                    const std::vector<int64_t>& src = static_cast<const ColumnTyped<int64_t>&>(*batch->GetColumn(column_index)).GetData();
                     column_data.insert(column_data.end(), src.begin(), src.end());
                 }
                 merged_columns.push_back(std::make_shared<ColumnTyped<int64_t>>(std::move(column_data)));
@@ -420,7 +420,7 @@ std::shared_ptr<Batch> MergeBatchesByRows(const std::vector<std::shared_ptr<Batc
                 std::vector<float> column_data;
                 column_data.reserve(total_rows);
                 for (const std::shared_ptr<Batch>& batch : batches) {
-                    const std::vector<float>& src = dynamic_cast<const ColumnTyped<float>&>(*batch->GetColumn(column_index)).GetData();
+                    const std::vector<float>& src = static_cast<const ColumnTyped<float>&>(*batch->GetColumn(column_index)).GetData();
                     column_data.insert(column_data.end(), src.begin(), src.end());
                 }
                 merged_columns.push_back(std::make_shared<ColumnTyped<float>>(std::move(column_data)));
@@ -430,7 +430,7 @@ std::shared_ptr<Batch> MergeBatchesByRows(const std::vector<std::shared_ptr<Batc
                 std::vector<double> column_data;
                 column_data.reserve(total_rows);
                 for (const std::shared_ptr<Batch>& batch : batches) {
-                    const std::vector<double>& src = dynamic_cast<const ColumnTyped<double>&>(*batch->GetColumn(column_index)).GetData();
+                    const std::vector<double>& src = static_cast<const ColumnTyped<double>&>(*batch->GetColumn(column_index)).GetData();
                     column_data.insert(column_data.end(), src.begin(), src.end());
                 }
                 merged_columns.push_back(std::make_shared<ColumnTyped<double>>(std::move(column_data)));
@@ -440,7 +440,7 @@ std::shared_ptr<Batch> MergeBatchesByRows(const std::vector<std::shared_ptr<Batc
                 std::vector<Date> column_data;
                 column_data.reserve(total_rows);
                 for (const std::shared_ptr<Batch>& batch : batches) {
-                    const std::vector<Date>& src = dynamic_cast<const ColumnTyped<Date>&>(*batch->GetColumn(column_index)).GetData();
+                    const std::vector<Date>& src = static_cast<const ColumnTyped<Date>&>(*batch->GetColumn(column_index)).GetData();
                     column_data.insert(column_data.end(), src.begin(), src.end());
                 }
                 merged_columns.push_back(std::make_shared<ColumnTyped<Date>>(std::move(column_data)));
@@ -450,7 +450,7 @@ std::shared_ptr<Batch> MergeBatchesByRows(const std::vector<std::shared_ptr<Batc
                 std::vector<Timestamp> column_data;
                 column_data.reserve(total_rows);
                 for (const std::shared_ptr<Batch>& batch : batches) {
-                    const std::vector<Timestamp>& src = dynamic_cast<const ColumnTyped<Timestamp>&>(*batch->GetColumn(column_index)).GetData();
+                    const std::vector<Timestamp>& src = static_cast<const ColumnTyped<Timestamp>&>(*batch->GetColumn(column_index)).GetData();
                     column_data.insert(column_data.end(), src.begin(), src.end());
                 }
                 merged_columns.push_back(std::make_shared<ColumnTyped<Timestamp>>(std::move(column_data)));
@@ -460,7 +460,7 @@ std::shared_ptr<Batch> MergeBatchesByRows(const std::vector<std::shared_ptr<Batc
                 std::vector<char> column_data;
                 column_data.reserve(total_rows);
                 for (const std::shared_ptr<Batch>& batch : batches) {
-                    const std::vector<char>& src = dynamic_cast<const ColumnTyped<char>&>(*batch->GetColumn(column_index)).GetData();
+                    const std::vector<char>& src = static_cast<const ColumnTyped<char>&>(*batch->GetColumn(column_index)).GetData();
                     column_data.insert(column_data.end(), src.begin(), src.end());
                 }
                 merged_columns.push_back(std::make_shared<ColumnTyped<char>>(std::move(column_data)));
@@ -470,7 +470,7 @@ std::shared_ptr<Batch> MergeBatchesByRows(const std::vector<std::shared_ptr<Batc
                 std::vector<std::string> column_data;
                 column_data.reserve(total_rows);
                 for (const std::shared_ptr<Batch>& batch : batches) {
-                    const std::vector<std::string>& src = dynamic_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(column_index)).GetData();
+                    const std::vector<std::string>& src = static_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(column_index)).GetData();
                     column_data.insert(column_data.end(), src.begin(), src.end());
                 }
                 merged_columns.push_back(std::make_shared<ColumnTyped<std::string>>(std::move(column_data)));

@@ -80,15 +80,45 @@ cmake --build build -j$(nproc)
 
 ---
 
+## Hash map для GROUP BY
+
+`GroupByAggregationOperator` использует хэш-таблицу `GroupByMap` для хранения групп. Реализацию можно переключить флагом `GROUP_BY_MAP` при сборке.
+
+| Значение `GROUP_BY_MAP` | Тип | Описание |
+|-------------------------|-----|----------|
+| `STD` | `std::unordered_map` | Раздельное цепочечное хеширование, узлы в куче |
+| `BOOST_UNORDERED` | `boost::unordered_map` | Раздельное цепочечное хеширование, лучший аллокатор |
+| `BOOST_FLAT` (по умолчанию) | `boost::unordered_flat_map` | Открытая адресация, SIMD-проба, плоский массив |
+| `BOOST_NODE` | `boost::unordered_node_map` | Открытая адресация, SIMD-проба, итераторы не инвалидируются |
+| `ABSL_FLAT` | `absl::flat_hash_map` | Swiss Table, SIMD SSE2/AVX2, плоский массив |
+| `ABSL_NODE` | `absl::node_hash_map` | Swiss Table, SIMD SSE2/AVX2, итераторы не инвалидируются |
+
+Переключить через `script/build.sh` (переменная `GROUP_BY_MAP` в начале файла) или напрямую через CMake:
+
+```bash
+cmake -S . -B build -DGROUP_BY_MAP=BOOST_FLAT
+cmake --build build -j$(nproc)
+```
+
+Проверить, с какой реализацией собран бинарь:
+
+```bash
+grep GROUP_BY_MAP build/CMakeCache.txt
+```
+
+---
+
 ## Зависимости
 
 | Библиотека | Пакет (Ubuntu) | Назначение |
 |------------|---------------|-----------|
-| LZ4        | `liblz4-dev`  | Сжатие данных колонок |
-| RE2        | `libre2-dev`  | `RegexpReplaceExpression` (Q28) |
+| LZ4        | `liblz4-dev`         | Сжатие данных колонок |
+| RE2        | `libre2-dev`         | `RegexpReplaceExpression` (Q28) |
+| Boost      | `libboost-dev`       | `GROUP_BY_MAP=BOOST_*` (≥ 1.81) |
+| Abseil     | `libabsl-dev`        | `GROUP_BY_MAP=ABSL_*` |
 
 ```bash
-apt-get install -y liblz4-dev libre2-dev
+apt-get install -y liblz4-dev libre2-dev libboost-dev libabsl-dev
 ```
 
 Или через `script/setup.sh` (также устанавливает clang-20 и cmake).
@@ -102,17 +132,19 @@ apt-get install -y liblz4-dev libre2-dev
 ```bash
 cd build
 cmake ..   # только если менялись CMakeLists.txt
-cmake --build . --target test_convertion test_queries test_aggregation_functions test_expressions
+cmake --build . --target test_convertion test_queries test_aggregation_functions test_expressions test_compression
 ./tests/test_convertion
 ./tests/test_queries
 ./tests/test_aggregation_functions
 ./tests/test_expressions
+./tests/test_compression
 ```
 
-- `test_convertion` — тесты `.csv` -> `.clmn` -> `.csv`.
-- `test_queries` — тесты запросов Q0–Q42: строит план, выполняет, сравнивает результат с эталоном.
-- `test_aggregation_functions` — тесты агрегаций.
-- `test_expressions` — тесты выражений.
+- `test_convertion` — round-trip тесты `.csv` → `.clmn` → `.csv` для всех типов колонок.
+- `test_queries` — тесты Q0–Q42: строит план, выполняет, сравнивает результат с эталоном.
+- `test_aggregation_functions` — тесты всех агрегаций: CountRows, CountDistinct, Sum, SumWithOffset, Avg, Min/Max (Int64, Date, Timestamp, String).
+- `test_expressions` — тесты всех Expression: Equal, NotEqual, Contains, NotContains, GreaterOrEqual, LessOrEqual, Constant, SumExpression, And, Or, Length, RegexpReplace, CaseWhen, ExtractMinute, TruncateToMinute.
+- `test_compression` — тесты кодирования: примитивы RLE/Dict/Delta и все комбинации флагов для EncodeIntegerVector, EncodeFloatVector, EncodeStringVector.
 
 ---
 
@@ -183,11 +215,18 @@ python3 graph/queries_runs_ms.py   # → queries_cold_ms_*.png, queries_hot_ms_*
 python3 graph/queries_runs_s.py    # → queries_cold_s_*.png,  queries_hot_s_*.png
 
 # Сравнение с DuckDB (горячий и холодный кэш)
-python3 graph/compare_ms.py   # → compare_cold_ms_*.png, compare_hot_ms_*.png
-python3 graph/compare_s.py    # → compare_cold_s_*.png,  compare_hot_s_*.png
+python3 graph/compare_ms.py       # → compare_cold_ms_*.png,     compare_hot_ms_*.png
+python3 graph/compare_s.py        # → compare_cold_s_*.png,      compare_hot_s_*.png
+
+# То же с логарифмической шкалой
+python3 graph/queries_runs_ms_log.py  # → queries_cold_ms_log_*.png, queries_hot_ms_log_*.png
+python3 graph/compare_ms_log.py       # → compare_cold_ms_log_*.png, compare_hot_ms_log_*.png
+
+# Среднее время при разных реализациях hash map
+python3 graph/map_comparison_ms.py    # → map_comparison_ms_*.png
 
 # Размеры файлов
-python3 graph/file_sizes.py   # → graph/visualization/file_sizes_*.png
+python3 graph/file_sizes.py       # → graph/visualization/file_sizes_*.png
 
 deactivate
 ```
@@ -208,8 +247,6 @@ src/
                                         MakeColumnFromBytes, MergeBatchesByRows
     schema.h / schema.cpp            — Schema
     batch.h / batch.cpp              — Batch, kColumnBatchSize, kRowBatchSize, SetBatchSize
-    reader_writer_clmn.h / .cpp      — ReaderClmn, WriterClmn
-    reader_writer_csv.h / .cpp       — ReaderCsv, WriterCsv
   compression/
     encoding.h / encoding.cpp        — EncodeColumn / DecodeColumn, GetCompressionFlags,
                                        EncodeIntegerVector, EncodeFloatVector, EncodeStringVector
@@ -222,16 +259,19 @@ src/
   convertion/
     from_csv_to_clmn.h / .cpp        — Конвертер .csv → .clmn
     from_clmn_to_csv.h / .cpp        — Конвертер .clmn → .csv
+    reader_writer_clmn.h / .cpp      — ReaderClmn, WriterClmn
+    reader_writer_csv.h / .cpp       — ReaderCsv, WriterCsv
   execution/
-    operators.h                      — базовый класс Operator
+    operator.h                       — базовый класс Operator
+    operators.h                      — фасад: включает все *_operator.h
     expressions.h / .cpp             — все Expression; RegexpReplaceExpression использует RE2
     aggregation_functions.h / .cpp   — все AggregationFunction
-    *_operators.h / .cpp             — Scan, Write, Filter, Project, GlobalAgg,
-                                       GroupByAgg, TopK, Sort, Limit
+    *_operator.h / .cpp              — Scan, Write, Filter, Project, GlobalAgg,
+                                       GroupByAgg, TopK, Sort, Limit, Offset
 exe/
   convert.cpp                        — CLI: конвертация .csv → .clmn
   run_query.cpp                      — CLI: выполнение запросов Q0–Q42
-tests/                               — GoogleTest (4 набора)
+tests/                               — GoogleTest (5 наборов)
 clickbench/                          — датасет, схема, SQL-запросы, эталонные ответы
 script/                              — shell-скрипты для сборки, конвертации, проверки
 graph/
@@ -240,8 +280,11 @@ graph/
   queries_s.py                       — график времени запросов (с)
   queries_runs_ms.py                 — холодный и горячий кэш (мс), без DuckDB
   queries_runs_s.py                  — холодный и горячий кэш (с), без DuckDB
+  queries_runs_ms_log.py             — то же с логарифмической шкалой (мс)
   compare_ms.py                      — сравнение с DuckDB, холодный и горячий кэш (мс)
   compare_s.py                       — сравнение с DuckDB, холодный и горячий кэш (с)
+  compare_ms_log.py                  — то же с логарифмической шкалой (мс)
+  map_comparison_ms.py               — среднее время запросов при разных реализациях GROUP BY hash map
   file_sizes.py                      — сравнение размеров .clmn-файлов
   visualization/                     — сохранённые графики (.png)
 ```

@@ -1,4 +1,4 @@
-#include "src/execution/filter_operators.h"
+#include "src/execution/filter_operator.h"
 
 FilterOperator::FilterOperator(std::shared_ptr<Operator> next, std::shared_ptr<Expression> predicate) {
     next_ = std::move(next);
@@ -11,11 +11,11 @@ std::shared_ptr<Batch> FilterOperator::Next() {
         return nullptr;
     }
     std::shared_ptr<Column> mask_column = predicate_->Eval(batch);
-    const std::vector<char>& mask = dynamic_cast<const ColumnTyped<char>&>(*mask_column).GetData();
+    const std::vector<char>& mask = static_cast<const ColumnTyped<char>&>(*mask_column).GetData();
     std::vector<size_t> indices;
     indices.reserve(mask.size());
     for (size_t j = 0; j < mask.size(); j++) {
-        if (mask[j] != '0') {
+        if (mask[j] != 0) {
             indices.push_back(j);
         }
     }

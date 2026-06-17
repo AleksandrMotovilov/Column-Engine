@@ -1,4 +1,4 @@
-#include "src/execution/scan_operators.h"
+#include "src/execution/scan_operator.h"
 
 ScanOperator::ScanOperator(const std::string& file_clmn, std::optional<std::vector<std::string>> columns_names) {
     reader_ = std::make_unique<ReaderClmn>(file_clmn, std::move(columns_names));
