@@ -102,17 +102,19 @@ apt-get install -y liblz4-dev libre2-dev
 ```bash
 cd build
 cmake ..   # только если менялись CMakeLists.txt
-cmake --build . --target test_convertion test_queries test_aggregation_functions test_expressions
+cmake --build . --target test_convertion test_queries test_aggregation_functions test_expressions test_compression
 ./tests/test_convertion
 ./tests/test_queries
 ./tests/test_aggregation_functions
 ./tests/test_expressions
+./tests/test_compression
 ```
 
-- `test_convertion` — тесты `.csv` -> `.clmn` -> `.csv`.
-- `test_queries` — тесты запросов Q0–Q42: строит план, выполняет, сравнивает результат с эталоном.
-- `test_aggregation_functions` — тесты агрегаций.
-- `test_expressions` — тесты выражений.
+- `test_convertion` — round-trip тесты `.csv` → `.clmn` → `.csv` для всех типов колонок.
+- `test_queries` — тесты Q0–Q42: строит план, выполняет, сравнивает результат с эталоном.
+- `test_aggregation_functions` — тесты всех агрегаций: CountRows, CountDistinct, Sum, SumWithOffset, Avg, Min/Max (Int64, Date, Timestamp, String).
+- `test_expressions` — тесты всех Expression: Equal, NotEqual, Contains, NotContains, GreaterOrEqual, LessOrEqual, Constant, SumExpression, And, Or, Length, RegexpReplace, CaseWhen, ExtractMinute, TruncateToMinute.
+- `test_compression` — тесты кодирования: примитивы RLE/Dict/Delta и все комбинации флагов для EncodeIntegerVector, EncodeFloatVector, EncodeStringVector.
 
 ---
 
@@ -208,8 +210,6 @@ src/
                                         MakeColumnFromBytes, MergeBatchesByRows
     schema.h / schema.cpp            — Schema
     batch.h / batch.cpp              — Batch, kColumnBatchSize, kRowBatchSize, SetBatchSize
-    reader_writer_clmn.h / .cpp      — ReaderClmn, WriterClmn
-    reader_writer_csv.h / .cpp       — ReaderCsv, WriterCsv
   compression/
     encoding.h / encoding.cpp        — EncodeColumn / DecodeColumn, GetCompressionFlags,
                                        EncodeIntegerVector, EncodeFloatVector, EncodeStringVector
@@ -222,16 +222,19 @@ src/
   convertion/
     from_csv_to_clmn.h / .cpp        — Конвертер .csv → .clmn
     from_clmn_to_csv.h / .cpp        — Конвертер .clmn → .csv
+    reader_writer_clmn.h / .cpp      — ReaderClmn, WriterClmn
+    reader_writer_csv.h / .cpp       — ReaderCsv, WriterCsv
   execution/
-    operators.h                      — базовый класс Operator
+    operator.h                       — базовый класс Operator
+    operators.h                      — фасад: включает все *_operator.h
     expressions.h / .cpp             — все Expression; RegexpReplaceExpression использует RE2
     aggregation_functions.h / .cpp   — все AggregationFunction
-    *_operators.h / .cpp             — Scan, Write, Filter, Project, GlobalAgg,
-                                       GroupByAgg, TopK, Sort, Limit
+    *_operator.h / .cpp              — Scan, Write, Filter, Project, GlobalAgg,
+                                       GroupByAgg, TopK, Sort, Limit, Offset
 exe/
   convert.cpp                        — CLI: конвертация .csv → .clmn
   run_query.cpp                      — CLI: выполнение запросов Q0–Q42
-tests/                               — GoogleTest (4 набора)
+tests/                               — GoogleTest (5 наборов)
 clickbench/                          — датасет, схема, SQL-запросы, эталонные ответы
 script/                              — shell-скрипты для сборки, конвертации, проверки
 graph/
