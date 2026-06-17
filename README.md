@@ -80,15 +80,45 @@ cmake --build build -j$(nproc)
 
 ---
 
+## Hash map для GROUP BY
+
+`GroupByAggregationOperator` использует хэш-таблицу `GroupByMap` для хранения групп. Реализацию можно переключить флагом `GROUP_BY_MAP` при сборке.
+
+| Значение `GROUP_BY_MAP` | Тип | Описание |
+|-------------------------|-----|----------|
+| `STD` | `std::unordered_map` | Раздельное цепочечное хеширование, узлы в куче |
+| `BOOST_UNORDERED` | `boost::unordered_map` | Раздельное цепочечное хеширование, лучший аллокатор |
+| `BOOST_FLAT` (по умолчанию) | `boost::unordered_flat_map` | Открытая адресация, SIMD-проба, плоский массив |
+| `BOOST_NODE` | `boost::unordered_node_map` | Открытая адресация, SIMD-проба, итераторы не инвалидируются |
+| `ABSL_FLAT` | `absl::flat_hash_map` | Swiss Table, SIMD SSE2/AVX2, плоский массив |
+| `ABSL_NODE` | `absl::node_hash_map` | Swiss Table, SIMD SSE2/AVX2, итераторы не инвалидируются |
+
+Переключить через `script/build.sh` (переменная `GROUP_BY_MAP` в начале файла) или напрямую через CMake:
+
+```bash
+cmake -S . -B build -DGROUP_BY_MAP=BOOST_FLAT
+cmake --build build -j$(nproc)
+```
+
+Проверить, с какой реализацией собран бинарь:
+
+```bash
+grep GROUP_BY_MAP build/CMakeCache.txt
+```
+
+---
+
 ## Зависимости
 
 | Библиотека | Пакет (Ubuntu) | Назначение |
 |------------|---------------|-----------|
-| LZ4        | `liblz4-dev`  | Сжатие данных колонок |
-| RE2        | `libre2-dev`  | `RegexpReplaceExpression` (Q28) |
+| LZ4        | `liblz4-dev`         | Сжатие данных колонок |
+| RE2        | `libre2-dev`         | `RegexpReplaceExpression` (Q28) |
+| Boost      | `libboost-dev`       | `GROUP_BY_MAP=BOOST_*` (≥ 1.81) |
+| Abseil     | `libabsl-dev`        | `GROUP_BY_MAP=ABSL_*` |
 
 ```bash
-apt-get install -y liblz4-dev libre2-dev
+apt-get install -y liblz4-dev libre2-dev libboost-dev libabsl-dev
 ```
 
 Или через `script/setup.sh` (также устанавливает clang-20 и cmake).
@@ -185,11 +215,18 @@ python3 graph/queries_runs_ms.py   # → queries_cold_ms_*.png, queries_hot_ms_*
 python3 graph/queries_runs_s.py    # → queries_cold_s_*.png,  queries_hot_s_*.png
 
 # Сравнение с DuckDB (горячий и холодный кэш)
-python3 graph/compare_ms.py   # → compare_cold_ms_*.png, compare_hot_ms_*.png
-python3 graph/compare_s.py    # → compare_cold_s_*.png,  compare_hot_s_*.png
+python3 graph/compare_ms.py       # → compare_cold_ms_*.png,     compare_hot_ms_*.png
+python3 graph/compare_s.py        # → compare_cold_s_*.png,      compare_hot_s_*.png
+
+# То же с логарифмической шкалой
+python3 graph/queries_runs_ms_log.py  # → queries_cold_ms_log_*.png, queries_hot_ms_log_*.png
+python3 graph/compare_ms_log.py       # → compare_cold_ms_log_*.png, compare_hot_ms_log_*.png
+
+# Среднее время при разных реализациях hash map
+python3 graph/map_comparison_ms.py    # → map_comparison_ms_*.png
 
 # Размеры файлов
-python3 graph/file_sizes.py   # → graph/visualization/file_sizes_*.png
+python3 graph/file_sizes.py       # → graph/visualization/file_sizes_*.png
 
 deactivate
 ```
@@ -243,8 +280,11 @@ graph/
   queries_s.py                       — график времени запросов (с)
   queries_runs_ms.py                 — холодный и горячий кэш (мс), без DuckDB
   queries_runs_s.py                  — холодный и горячий кэш (с), без DuckDB
+  queries_runs_ms_log.py             — то же с логарифмической шкалой (мс)
   compare_ms.py                      — сравнение с DuckDB, холодный и горячий кэш (мс)
   compare_s.py                       — сравнение с DuckDB, холодный и горячий кэш (с)
+  compare_ms_log.py                  — то же с логарифмической шкалой (мс)
+  map_comparison_ms.py               — среднее время запросов при разных реализациях GROUP BY hash map
   file_sizes.py                      — сравнение размеров .clmn-файлов
   visualization/                     — сохранённые графики (.png)
 ```

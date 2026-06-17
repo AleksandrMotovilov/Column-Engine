@@ -131,7 +131,7 @@ std::shared_ptr<Batch> GroupByAggregationOperator::Next() {
     }
     std::shared_ptr<Schema> sub_schema = std::make_shared<Schema>(std::move(sub_column_names), std::move(sub_column_types));
     
-    std::unordered_map<std::vector<char>, size_t, VectorCharHash> key_to_index;
+    GroupByMap key_to_index;
     std::vector<size_t> group_representative_rows;
     std::vector<std::vector<size_t>> group_row_indices;
     std::vector<char> key;

@@ -15,6 +15,10 @@ std::shared_ptr<Batch> MakeBatch(
     return std::make_shared<Batch>(rows, std::make_shared<Schema>(std::move(names), std::move(types)), std::move(cols));
 }
 
+char GetMaskValue(std::shared_ptr<Column> column, size_t index) {
+    return static_cast<const ColumnTyped<char>&>(*column).GetData()[index];
+}
+
 std::string GetResultValue(std::shared_ptr<Column> column, size_t index, Type column_type) {
     switch (column_type) {
         case Type::Char:
@@ -53,10 +57,10 @@ TEST(Expressions, Equal) {
         EqualExpression expr("id", "2");
         std::shared_ptr<Column> result = expr.Eval(batch);
         ASSERT_EQ(result->GetSize(), 4u);
-        EXPECT_EQ(GetResultValue(result,0, Type::Char), "0");
-        EXPECT_EQ(GetResultValue(result,1, Type::Char), "1");
-        EXPECT_EQ(GetResultValue(result,2, Type::Char), "0");
-        EXPECT_EQ(GetResultValue(result,3, Type::Char), "1");
+        EXPECT_EQ(GetMaskValue(result, 0), '\x00');
+        EXPECT_EQ(GetMaskValue(result, 1), '\x01');
+        EXPECT_EQ(GetMaskValue(result, 2), '\x00');
+        EXPECT_EQ(GetMaskValue(result, 3), '\x01');
     }
     {
         std::shared_ptr<Batch> batch = MakeBatch(
@@ -83,10 +87,10 @@ TEST(Expressions, NotEqual) {
         NotEqualExpression expr("name", "");
         std::shared_ptr<Column> result = expr.Eval(batch);
         ASSERT_EQ(result->GetSize(), 4u);
-        EXPECT_EQ(GetResultValue(result,0, Type::Char), "1");
-        EXPECT_EQ(GetResultValue(result,1, Type::Char), "0");
-        EXPECT_EQ(GetResultValue(result,2, Type::Char), "1");
-        EXPECT_EQ(GetResultValue(result,3, Type::Char), "0");
+        EXPECT_EQ(GetMaskValue(result, 0), '\x01');
+        EXPECT_EQ(GetMaskValue(result, 1), '\x00');
+        EXPECT_EQ(GetMaskValue(result, 2), '\x01');
+        EXPECT_EQ(GetMaskValue(result, 3), '\x00');
     }
     {
         std::shared_ptr<Batch> batch = MakeBatch(
@@ -113,10 +117,10 @@ TEST(Expressions, Contains) {
         ContainsExpression expr("url", "google");
         std::shared_ptr<Column> result = expr.Eval(batch);
         ASSERT_EQ(result->GetSize(), 4u);
-        EXPECT_EQ(GetResultValue(result,0, Type::Char), "1");
-        EXPECT_EQ(GetResultValue(result,1, Type::Char), "0");
-        EXPECT_EQ(GetResultValue(result,2, Type::Char), "1");
-        EXPECT_EQ(GetResultValue(result,3, Type::Char), "0");
+        EXPECT_EQ(GetMaskValue(result, 0), '\x01');
+        EXPECT_EQ(GetMaskValue(result, 1), '\x00');
+        EXPECT_EQ(GetMaskValue(result, 2), '\x01');
+        EXPECT_EQ(GetMaskValue(result, 3), '\x00');
     }
     {
         std::shared_ptr<Batch> batch = MakeBatch(
@@ -143,10 +147,10 @@ TEST(Expressions, NotContains) {
         NotContainsExpression expr("url", "google");
         std::shared_ptr<Column> result = expr.Eval(batch);
         ASSERT_EQ(result->GetSize(), 4u);
-        EXPECT_EQ(GetResultValue(result,0, Type::Char), "0");
-        EXPECT_EQ(GetResultValue(result,1, Type::Char), "1");
-        EXPECT_EQ(GetResultValue(result,2, Type::Char), "0");
-        EXPECT_EQ(GetResultValue(result,3, Type::Char), "1");
+        EXPECT_EQ(GetMaskValue(result, 0), '\x00');
+        EXPECT_EQ(GetMaskValue(result, 1), '\x01');
+        EXPECT_EQ(GetMaskValue(result, 2), '\x00');
+        EXPECT_EQ(GetMaskValue(result, 3), '\x01');
     }
     {
         std::shared_ptr<Batch> batch = MakeBatch(
@@ -173,10 +177,10 @@ TEST(Expressions, GreaterOrEqual) {
         GreaterOrEqualExpression expr("score", "10");
         std::shared_ptr<Column> result = expr.Eval(batch);
         ASSERT_EQ(result->GetSize(), 4u);
-        EXPECT_EQ(GetResultValue(result,0, Type::Char), "0");
-        EXPECT_EQ(GetResultValue(result,1, Type::Char), "1");
-        EXPECT_EQ(GetResultValue(result,2, Type::Char), "0");
-        EXPECT_EQ(GetResultValue(result,3, Type::Char), "1");
+        EXPECT_EQ(GetMaskValue(result, 0), '\x00');
+        EXPECT_EQ(GetMaskValue(result, 1), '\x01');
+        EXPECT_EQ(GetMaskValue(result, 2), '\x00');
+        EXPECT_EQ(GetMaskValue(result, 3), '\x01');
     }
     {
         std::shared_ptr<Batch> batch = MakeBatch(
@@ -188,9 +192,9 @@ TEST(Expressions, GreaterOrEqual) {
         GreaterOrEqualExpression expr("d", "2013-07-01");
         std::shared_ptr<Column> result = expr.Eval(batch);
         ASSERT_EQ(result->GetSize(), 3u);
-        EXPECT_EQ(GetResultValue(result,0, Type::Char), "1");
-        EXPECT_EQ(GetResultValue(result,1, Type::Char), "0");
-        EXPECT_EQ(GetResultValue(result,2, Type::Char), "1");
+        EXPECT_EQ(GetMaskValue(result, 0), '\x01');
+        EXPECT_EQ(GetMaskValue(result, 1), '\x00');
+        EXPECT_EQ(GetMaskValue(result, 2), '\x01');
     }
     {
         std::shared_ptr<Batch> batch = MakeBatch(
@@ -202,9 +206,9 @@ TEST(Expressions, GreaterOrEqual) {
         GreaterOrEqualExpression expr("name", "banana");
         std::shared_ptr<Column> result = expr.Eval(batch);
         ASSERT_EQ(result->GetSize(), 3u);
-        EXPECT_EQ(GetResultValue(result,0, Type::Char), "0");
-        EXPECT_EQ(GetResultValue(result,1, Type::Char), "1");
-        EXPECT_EQ(GetResultValue(result,2, Type::Char), "1");
+        EXPECT_EQ(GetMaskValue(result, 0), '\x00');
+        EXPECT_EQ(GetMaskValue(result, 1), '\x01');
+        EXPECT_EQ(GetMaskValue(result, 2), '\x01');
     }
     {
         std::shared_ptr<Batch> batch = MakeBatch(
@@ -231,10 +235,10 @@ TEST(Expressions, LessOrEqual) {
         LessOrEqualExpression expr("score", "5");
         std::shared_ptr<Column> result = expr.Eval(batch);
         ASSERT_EQ(result->GetSize(), 4u);
-        EXPECT_EQ(GetResultValue(result,0, Type::Char), "1");
-        EXPECT_EQ(GetResultValue(result,1, Type::Char), "0");
-        EXPECT_EQ(GetResultValue(result,2, Type::Char), "1");
-        EXPECT_EQ(GetResultValue(result,3, Type::Char), "0");
+        EXPECT_EQ(GetMaskValue(result, 0), '\x01');
+        EXPECT_EQ(GetMaskValue(result, 1), '\x00');
+        EXPECT_EQ(GetMaskValue(result, 2), '\x01');
+        EXPECT_EQ(GetMaskValue(result, 3), '\x00');
     }
     {
         std::shared_ptr<Batch> batch = MakeBatch(
@@ -246,9 +250,9 @@ TEST(Expressions, LessOrEqual) {
         LessOrEqualExpression expr("d", "2013-07-31");
         std::shared_ptr<Column> result = expr.Eval(batch);
         ASSERT_EQ(result->GetSize(), 3u);
-        EXPECT_EQ(GetResultValue(result,0, Type::Char), "1");
-        EXPECT_EQ(GetResultValue(result,1, Type::Char), "0");
-        EXPECT_EQ(GetResultValue(result,2, Type::Char), "1");
+        EXPECT_EQ(GetMaskValue(result, 0), '\x01');
+        EXPECT_EQ(GetMaskValue(result, 1), '\x00');
+        EXPECT_EQ(GetMaskValue(result, 2), '\x01');
     }
     {
         std::shared_ptr<Batch> batch = MakeBatch(
@@ -260,9 +264,9 @@ TEST(Expressions, LessOrEqual) {
         LessOrEqualExpression expr("name", "banana");
         std::shared_ptr<Column> result = expr.Eval(batch);
         ASSERT_EQ(result->GetSize(), 3u);
-        EXPECT_EQ(GetResultValue(result,0, Type::Char), "1");
-        EXPECT_EQ(GetResultValue(result,1, Type::Char), "1");
-        EXPECT_EQ(GetResultValue(result,2, Type::Char), "0");
+        EXPECT_EQ(GetMaskValue(result, 0), '\x01');
+        EXPECT_EQ(GetMaskValue(result, 1), '\x01');
+        EXPECT_EQ(GetMaskValue(result, 2), '\x00');
     }
     {
         std::shared_ptr<Batch> batch = MakeBatch(
@@ -349,10 +353,10 @@ TEST(Expressions, And) {
     AndExpression expr(std::make_shared<ContainsExpression>("url", "google"), std::make_shared<NotEqualExpression>("phrase", ""));
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 4u);
-    EXPECT_EQ(GetResultValue(result,0, Type::Char), "1");
-    EXPECT_EQ(GetResultValue(result,1, Type::Char), "0");
-    EXPECT_EQ(GetResultValue(result,2, Type::Char), "1");
-    EXPECT_EQ(GetResultValue(result,3, Type::Char), "0");
+    EXPECT_EQ(GetMaskValue(result, 0), '\x01');
+    EXPECT_EQ(GetMaskValue(result, 1), '\x00');
+    EXPECT_EQ(GetMaskValue(result, 2), '\x01');
+    EXPECT_EQ(GetMaskValue(result, 3), '\x00');
 }
 
 TEST(Expressions, Or) {
@@ -367,10 +371,10 @@ TEST(Expressions, Or) {
     OrExpression expr(std::make_shared<ContainsExpression>("url", "google"), std::make_shared<NotEqualExpression>("phrase", ""));
     std::shared_ptr<Column> result = expr.Eval(batch);
     ASSERT_EQ(result->GetSize(), 4u);
-    EXPECT_EQ(GetResultValue(result,0, Type::Char), "1");
-    EXPECT_EQ(GetResultValue(result,1, Type::Char), "0");
-    EXPECT_EQ(GetResultValue(result,2, Type::Char), "1");
-    EXPECT_EQ(GetResultValue(result,3, Type::Char), "0");
+    EXPECT_EQ(GetMaskValue(result, 0), '\x01');
+    EXPECT_EQ(GetMaskValue(result, 1), '\x00');
+    EXPECT_EQ(GetMaskValue(result, 2), '\x01');
+    EXPECT_EQ(GetMaskValue(result, 3), '\x00');
 }
 
 TEST(Expressions, Length) {

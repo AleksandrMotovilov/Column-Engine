@@ -14,18 +14,18 @@
 #include "src/compression/encoding_rle.h"
 #include "src/compression/encoding_dict.h"
 
-constexpr size_t kFlagRleInt = 1u;
-constexpr size_t kFlagDeltaInt = 2u;
-constexpr size_t kFlagDictInt = 4u;
-constexpr size_t kFlagBitPackInt = 8u;
-constexpr size_t kFlagRleStr = 16u;
-constexpr size_t kFlagDictStr = 32u;
-constexpr size_t kFlagBitPackStr = 64u;
-constexpr size_t kFlagRleFloat = 128u;
-constexpr size_t kFlagDictFloat = 256u;
-constexpr size_t kFlagBitPackFloat = 512u;
-constexpr size_t kFlagLz4 = 1024u;
-constexpr size_t kFlagAdaptive = 2048u;
+constexpr size_t kFlagRleInt = 1u << 0;
+constexpr size_t kFlagDeltaInt = 1u << 1;
+constexpr size_t kFlagDictInt = 1u << 2;
+constexpr size_t kFlagBitPackInt = 1u << 3;
+constexpr size_t kFlagRleStr = 1u << 4;
+constexpr size_t kFlagDictStr = 1u << 5;
+constexpr size_t kFlagBitPackStr = 1u << 6;
+constexpr size_t kFlagRleFloat = 1u << 7;
+constexpr size_t kFlagDictFloat = 1u << 8;
+constexpr size_t kFlagBitPackFloat = 1u << 9;
+constexpr size_t kFlagLz4 = 1u << 10;
+constexpr size_t kFlagAdaptive = 1u << 11;
 
 size_t GetCompressionFlags();
 

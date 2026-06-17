@@ -19,9 +19,9 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
             int16_t threshold = FromString<int16_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] == threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -31,9 +31,9 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
             int32_t threshold = FromString<int32_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] == threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -43,9 +43,9 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
             int64_t threshold = FromString<int64_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] == threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -55,9 +55,9 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
             float threshold = FromString<float>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] == threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -67,9 +67,9 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
             double threshold = FromString<double>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] == threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -79,9 +79,9 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
             Date threshold = FromString<Date>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] == threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -91,9 +91,9 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
             Timestamp threshold = FromString<Timestamp>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] == threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -103,9 +103,9 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
             char threshold = FromString<char>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] == threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -114,9 +114,9 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
             const std::vector<std::string>& column_data = static_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] == value_) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -151,9 +151,9 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
             int16_t threshold = FromString<int16_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] != threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -163,9 +163,9 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
             int32_t threshold = FromString<int32_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] != threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -175,9 +175,9 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
             int64_t threshold = FromString<int64_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] != threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -187,9 +187,9 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
             float threshold = FromString<float>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] != threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -199,9 +199,9 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
             double threshold = FromString<double>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] != threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -211,9 +211,9 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
             Date threshold = FromString<Date>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] != threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -223,9 +223,9 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
             Timestamp threshold = FromString<Timestamp>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] != threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -235,9 +235,9 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
             char threshold = FromString<char>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] != threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -246,9 +246,9 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
             const std::vector<std::string>& column_data = static_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] != value_) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -283,9 +283,9 @@ std::shared_ptr<Column> GreaterOrEqualExpression::Eval(std::shared_ptr<Batch> ba
             int16_t threshold = FromString<int16_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] >= threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -295,9 +295,9 @@ std::shared_ptr<Column> GreaterOrEqualExpression::Eval(std::shared_ptr<Batch> ba
             int32_t threshold = FromString<int32_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] >= threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -307,9 +307,9 @@ std::shared_ptr<Column> GreaterOrEqualExpression::Eval(std::shared_ptr<Batch> ba
             int64_t threshold = FromString<int64_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] >= threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -319,9 +319,9 @@ std::shared_ptr<Column> GreaterOrEqualExpression::Eval(std::shared_ptr<Batch> ba
             float threshold = FromString<float>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] >= threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -331,9 +331,9 @@ std::shared_ptr<Column> GreaterOrEqualExpression::Eval(std::shared_ptr<Batch> ba
             double threshold = FromString<double>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] >= threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -343,9 +343,9 @@ std::shared_ptr<Column> GreaterOrEqualExpression::Eval(std::shared_ptr<Batch> ba
             Date threshold = FromString<Date>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] >= threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -355,9 +355,9 @@ std::shared_ptr<Column> GreaterOrEqualExpression::Eval(std::shared_ptr<Batch> ba
             Timestamp threshold = FromString<Timestamp>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] >= threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -366,9 +366,9 @@ std::shared_ptr<Column> GreaterOrEqualExpression::Eval(std::shared_ptr<Batch> ba
             const std::vector<std::string>& column_data = static_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] >= value_) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -403,9 +403,9 @@ std::shared_ptr<Column> LessOrEqualExpression::Eval(std::shared_ptr<Batch> batch
             int16_t threshold = FromString<int16_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] <= threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -415,9 +415,9 @@ std::shared_ptr<Column> LessOrEqualExpression::Eval(std::shared_ptr<Batch> batch
             int32_t threshold = FromString<int32_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] <= threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -427,9 +427,9 @@ std::shared_ptr<Column> LessOrEqualExpression::Eval(std::shared_ptr<Batch> batch
             int64_t threshold = FromString<int64_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] <= threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -439,9 +439,9 @@ std::shared_ptr<Column> LessOrEqualExpression::Eval(std::shared_ptr<Batch> batch
             float threshold = FromString<float>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] <= threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -451,9 +451,9 @@ std::shared_ptr<Column> LessOrEqualExpression::Eval(std::shared_ptr<Batch> batch
             double threshold = FromString<double>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] <= threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -463,9 +463,9 @@ std::shared_ptr<Column> LessOrEqualExpression::Eval(std::shared_ptr<Batch> batch
             Date threshold = FromString<Date>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] <= threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -475,9 +475,9 @@ std::shared_ptr<Column> LessOrEqualExpression::Eval(std::shared_ptr<Batch> batch
             Timestamp threshold = FromString<Timestamp>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] <= threshold) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -486,9 +486,9 @@ std::shared_ptr<Column> LessOrEqualExpression::Eval(std::shared_ptr<Batch> batch
             const std::vector<std::string>& column_data = static_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] <= value_) {
-                    result[i] = '1';
+                    result[i] = 1;
                 } else {
-                    result[i] = '0';
+                    result[i] = 0;
                 }
             }
             break;
@@ -519,9 +519,9 @@ std::shared_ptr<Column> ContainsExpression::Eval(std::shared_ptr<Batch> batch) c
     std::vector<char> result(rows_number);
     for (size_t i = 0; i < rows_number; i++) {
         if (column_data[i].find(substring_) != std::string::npos) {
-            result[i] = '1';
+            result[i] = 1;
         } else {
-            result[i] = '0';
+            result[i] = 0;
         }
     }
     return std::make_shared<ColumnTyped<char>>(std::move(result));
@@ -546,9 +546,9 @@ std::shared_ptr<Column> NotContainsExpression::Eval(std::shared_ptr<Batch> batch
     std::vector<char> result(rows_number);
     for (size_t i = 0; i < rows_number; i++) {
         if (column_data[i].find(substring_) == std::string::npos) {
-            result[i] = '1';
+            result[i] = 1;
         } else {
-            result[i] = '0';
+            result[i] = 0;
         }
     }
     return std::make_shared<ColumnTyped<char>>(std::move(result));
@@ -571,10 +571,10 @@ std::shared_ptr<Column> AndExpression::Eval(std::shared_ptr<Batch> batch) const 
     size_t rows_number = batch->GetRowsNumber();
     std::vector<char> result(rows_number);
     for (size_t i = 0; i < rows_number; i++) {
-        if (left_data[i] != '0' && right_data[i] != '0') {
-            result[i] = '1';
+        if (left_data[i] != 0 && right_data[i] != 0) {
+            result[i] = 1;
         } else {
-            result[i] = '0';
+            result[i] = 0;
         }
     }
     return std::make_shared<ColumnTyped<char>>(std::move(result));
@@ -597,10 +597,10 @@ std::shared_ptr<Column> OrExpression::Eval(std::shared_ptr<Batch> batch) const {
     size_t rows_number = batch->GetRowsNumber();
     std::vector<char> result(rows_number);
     for (size_t i = 0; i < rows_number; i++) {
-        if (left_data[i] != '0' || right_data[i] != '0') {
-            result[i] = '1';
+        if (left_data[i] != 0 || right_data[i] != 0) {
+            result[i] = 1;
         } else {
-            result[i] = '0';
+            result[i] = 0;
         }
     }
     return std::make_shared<ColumnTyped<char>>(std::move(result));
@@ -733,7 +733,7 @@ std::shared_ptr<Column> CaseWhenExpression::Eval(std::shared_ptr<Batch> batch) c
     size_t rows_number = batch->GetRowsNumber();
     std::vector<std::string> result(rows_number);
     for (size_t i = 0; i < rows_number; i++) {
-        if (mask[i] != '0') {
+        if (mask[i] != 0) {
             result[i] = column_data[i];
         } else {
             result[i] = else_value_;

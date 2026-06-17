@@ -15,7 +15,7 @@ std::shared_ptr<Batch> FilterOperator::Next() {
     std::vector<size_t> indices;
     indices.reserve(mask.size());
     for (size_t j = 0; j < mask.size(); j++) {
-        if (mask[j] != '0') {
+        if (mask[j] != 0) {
             indices.push_back(j);
         }
     }
