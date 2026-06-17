@@ -1,5 +1,70 @@
 #include "src/execution/aggregation_functions.h"
 
+__int128 ComputeColumnSum(std::shared_ptr<Column> column, Type type) {
+    __int128 sum = 0;
+    switch (type) {
+        case Type::Int16: {
+            const std::vector<int16_t>& data = dynamic_cast<const ColumnTyped<int16_t>&>(*column).GetData();
+            for (int16_t value : data) {
+                sum += static_cast<__int128>(value);
+            }
+            break;
+        }
+        case Type::Int32: {
+            const std::vector<int32_t>& data = dynamic_cast<const ColumnTyped<int32_t>&>(*column).GetData();
+            for (int32_t value : data) {
+                sum += static_cast<__int128>(value);
+            }
+            break;
+        }
+        case Type::Int64: {
+            const std::vector<int64_t>& data = dynamic_cast<const ColumnTyped<int64_t>&>(*column).GetData();
+            for (int64_t value : data) {
+                sum += static_cast<__int128>(value);
+            }
+            break;
+        }
+        case Type::Float: {
+            const std::vector<float>& data = dynamic_cast<const ColumnTyped<float>&>(*column).GetData();
+            for (float value : data) {
+                sum += static_cast<__int128>(value);
+            }
+            break;
+        }
+        case Type::Double: {
+            const std::vector<double>& data = dynamic_cast<const ColumnTyped<double>&>(*column).GetData();
+            for (double value : data) {
+                sum += static_cast<__int128>(value);
+            }
+            break;
+        }
+        case Type::Date: {
+            const std::vector<Date>& data = dynamic_cast<const ColumnTyped<Date>&>(*column).GetData();
+            for (const Date& value : data) {
+                sum += static_cast<__int128>(value.GetValue());
+            }
+            break;
+        }
+        case Type::Timestamp: {
+            const std::vector<Timestamp>& data = dynamic_cast<const ColumnTyped<Timestamp>&>(*column).GetData();
+            for (const Timestamp& value : data) {
+                sum += static_cast<__int128>(value.GetValue());
+            }
+            break;
+        }
+        case Type::Char: {
+            const std::vector<char>& data = dynamic_cast<const ColumnTyped<char>&>(*column).GetData();
+            for (char value : data) {
+                sum += static_cast<__int128>(value);
+            }
+            break;
+        }
+        default:
+            throw std::runtime_error("Unsupported type for sum");
+    }
+    return sum;
+}
+
 void CountRowsAggregation::Update(std::shared_ptr<Batch> batch) {
     count_ += static_cast<int64_t>(batch->GetRowsNumber());
 }
@@ -15,6 +80,10 @@ Type CountRowsAggregation::GetType() const {
 
 std::string CountRowsAggregation::GetName() const {
     return "count(*)";
+}
+
+std::string CountRowsAggregation::GetNeededColumnName() const {
+    return "";
 }
 
 CountDistinctAggregationTyped<Date>::CountDistinctAggregationTyped(std::string column_name) {
@@ -46,6 +115,10 @@ std::string CountDistinctAggregationTyped<Date>::GetName() const {
     return "count(distinct " + column_name_ + ")";
 }
 
+std::string CountDistinctAggregationTyped<Date>::GetNeededColumnName() const {
+    return column_name_;
+}
+
 CountDistinctAggregationTyped<Timestamp>::CountDistinctAggregationTyped(std::string column_name) {
     column_name_ = std::move(column_name);
 }
@@ -73,6 +146,10 @@ Type CountDistinctAggregationTyped<Timestamp>::GetType() const {
 
 std::string CountDistinctAggregationTyped<Timestamp>::GetName() const {
     return "count(distinct " + column_name_ + ")";
+}
+
+std::string CountDistinctAggregationTyped<Timestamp>::GetNeededColumnName() const {
+    return column_name_;
 }
 
 CountDistinctAggregation::CountDistinctAggregation(std::string column_name) {
@@ -138,6 +215,10 @@ std::string CountDistinctAggregation::GetName() const {
     return "count(distinct " + column_name_ + ")";
 }
 
+std::string CountDistinctAggregation::GetNeededColumnName() const {
+    return column_name_;
+}
+
 SumAggregation::SumAggregation(std::string column_name) {
     column_name_ = std::move(column_name);
 }
@@ -147,7 +228,7 @@ void SumAggregation::Update(std::shared_ptr<Batch> batch) {
     if (index == batch->GetColumnsNumber()) {
         throw std::runtime_error("Column not found: " + column_name_ + " :: SumAggregation");
     }
-    sum_ += batch->GetColumn(index)->GetSum();
+    sum_ += ComputeColumnSum(batch->GetColumn(index), batch->GetType(index));
 }
 
 void SumAggregation::AppendResultBytes(std::vector<char>& buf) const {
@@ -164,6 +245,10 @@ std::string SumAggregation::GetName() const {
     return "sum(" + column_name_ + ")";
 }
 
+std::string SumAggregation::GetNeededColumnName() const {
+    return column_name_;
+}
+
 SumWithOffsetAggregation::SumWithOffsetAggregation(std::string column_name, int64_t offset) {
     column_name_ = std::move(column_name);
     offset_ = offset;
@@ -174,8 +259,9 @@ void SumWithOffsetAggregation::Update(std::shared_ptr<Batch> batch) {
     if (index == batch->GetColumnsNumber()) {
         throw std::runtime_error("Column not found: " + column_name_ + " :: SumWithOffsetAggregation");
     }
-    __int128 sum = batch->GetColumn(index)->GetSum();
-    __int128 count = batch->GetColumn(index)->GetSize();
+    std::shared_ptr<Column> column = batch->GetColumn(index);
+    __int128 sum = ComputeColumnSum(column, batch->GetType(index));
+    __int128 count = static_cast<__int128>(column->GetSize());
     sum_ += sum + static_cast<__int128>(offset_) * count;
 }
 
@@ -193,6 +279,10 @@ std::string SumWithOffsetAggregation::GetName() const {
     return "sum(" + column_name_ + "+" + std::to_string(offset_) + ")";
 }
 
+std::string SumWithOffsetAggregation::GetNeededColumnName() const {
+    return column_name_;
+}
+
 AvgAggregation::AvgAggregation(std::string column_name) {
     column_name_ = std::move(column_name);
 }
@@ -202,8 +292,9 @@ void AvgAggregation::Update(std::shared_ptr<Batch> batch) {
     if (index == batch->GetColumnsNumber()) {
         throw std::runtime_error("Column not found: " + column_name_ + " :: AvgAggregation");
     }
-    sum_ += batch->GetColumn(index)->GetSum();
-    count_ += static_cast<__int128>(batch->GetColumn(index)->GetSize());
+    std::shared_ptr<Column> column = batch->GetColumn(index);
+    sum_ += ComputeColumnSum(column, batch->GetType(index));
+    count_ += static_cast<__int128>(column->GetSize());
 }
 
 void AvgAggregation::AppendResultBytes(std::vector<char>& buf) const {
@@ -223,24 +314,8 @@ std::string AvgAggregation::GetName() const {
     return "avg(" + column_name_ + ")";
 }
 
-template<>
-void MinAggregationTyped<std::string>::Update(std::shared_ptr<Batch> batch) {
-    size_t index = batch->FindColumn(column_name_);
-    if (index == batch->GetColumnsNumber()) {
-        throw std::runtime_error("Column not found: " + column_name_ + " :: MinAggregation");
-    }
-    std::shared_ptr<Column> column = batch->GetColumn(index);
-    if (column->GetSize() == 0) {
-        return;
-    }
-    std::vector<char> buf;
-    column->AppendMinBytes(buf);
-    size_t len;
-    std::memcpy(&len, buf.data(), sizeof(size_t));
-    std::string batch_min(buf.data() + sizeof(size_t), len);
-    if (!min_value_.has_value() || batch_min < *min_value_) {
-        min_value_ = batch_min;
-    }
+std::string AvgAggregation::GetNeededColumnName() const {
+    return column_name_;
 }
 
 template<>
@@ -341,24 +416,8 @@ std::string MinAggregation::GetName() const {
     return "min(" + column_name_ + ")";
 }
 
-template<>
-void MaxAggregationTyped<std::string>::Update(std::shared_ptr<Batch> batch) {
-    size_t index = batch->FindColumn(column_name_);
-    if (index == batch->GetColumnsNumber()) {
-        throw std::runtime_error("Column not found: " + column_name_ + " :: MaxAggregation");
-    }
-    std::shared_ptr<Column> column = batch->GetColumn(index);
-    if (column->GetSize() == 0) {
-        return;
-    }
-    std::vector<char> buf;
-    column->AppendMaxBytes(buf);
-    size_t len;
-    std::memcpy(&len, buf.data(), sizeof(size_t));
-    std::string batch_max(buf.data() + sizeof(size_t), len);
-    if (!max_value_.has_value() || batch_max > *max_value_) {
-        max_value_ = batch_max;
-    }
+std::string MinAggregation::GetNeededColumnName() const {
+    return column_name_;
 }
 
 template<>
@@ -457,4 +516,8 @@ Type MaxAggregation::GetType() const {
 
 std::string MaxAggregation::GetName() const {
     return "max(" + column_name_ + ")";
+}
+
+std::string MaxAggregation::GetNeededColumnName() const {
+    return column_name_;
 }

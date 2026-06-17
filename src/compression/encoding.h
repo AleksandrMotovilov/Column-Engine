@@ -7,12 +7,12 @@
 #include <vector>
 #include "src/kernel/column.h"
 #include "src/kernel/types.h"
-#include "src/kernel/encoding_base.h"
-#include "src/kernel/encoding_bitpack.h"
-#include "src/kernel/encoding_lz4.h"
-#include "src/kernel/encoding_delta.h"
-#include "src/kernel/encoding_rle.h"
-#include "src/kernel/encoding_dict.h"
+#include "src/compression/encoding_base.h"
+#include "src/compression/encoding_bitpack.h"
+#include "src/compression/encoding_lz4.h"
+#include "src/compression/encoding_delta.h"
+#include "src/compression/encoding_rle.h"
+#include "src/compression/encoding_dict.h"
 
 constexpr size_t kFlagRleInt = 1u;
 constexpr size_t kFlagDeltaInt = 2u;

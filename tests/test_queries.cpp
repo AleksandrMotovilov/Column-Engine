@@ -808,7 +808,7 @@ TEST(Test_Query, Q23) {
                     std::make_shared<FilterOperator>(
                         std::make_shared<ScanOperator>(
                             input_clmn,
-                            std::vector<std::string>{}, true
+                            std::nullopt
                         ),
                         std::make_shared<ContainsExpression>("URL", "google")
                     ),

@@ -106,11 +106,37 @@ std::shared_ptr<Batch> GroupByAggregationOperator::Next() {
         group_column_types.push_back(merged_schema->GetType(index));
     }
 
+    std::vector<std::shared_ptr<AggregationFunction>> all_aggregations = aggregation_factory_();
+    std::unordered_set<std::string> needed_aggregation_columns;
+    std::vector<std::vector<char>> aggregation_bufs;
+    aggregation_bufs.resize(all_aggregations.size());
+    std::vector<Type> aggregation_types;
+    std::vector<std::string> aggregation_names;
+    for (const std::shared_ptr<AggregationFunction>& aggregation : all_aggregations) {
+        aggregation_types.push_back(aggregation->GetType());
+        aggregation_names.push_back(aggregation->GetName());
+        std::string column_name = aggregation->GetNeededColumnName();
+        if (column_name != "") {
+            needed_aggregation_columns.insert(column_name);
+        }
+    }
+    std::vector<size_t> sub_column_indices;
+    std::vector<std::string> sub_column_names;
+    std::vector<Type> sub_column_types;
+    for (const std::string& column_name : needed_aggregation_columns) {
+        size_t index = merged_schema->FindColumn(column_name);
+        sub_column_names.push_back(column_name);
+        sub_column_indices.push_back(index);
+        sub_column_types.push_back(merged_schema->GetType(index));
+    }
+    std::shared_ptr<Schema> sub_schema = std::make_shared<Schema>(std::move(sub_column_names), std::move(sub_column_types));
+    
     std::unordered_map<std::vector<char>, size_t, VectorCharHash> key_to_index;
     std::vector<size_t> group_representative_rows;
     std::vector<std::vector<size_t>> group_row_indices;
+    std::vector<char> key;
     for (size_t row = 0; row < merged->GetRowsNumber(); row++) {
-        std::vector<char> key;
+        key.clear();
         for (size_t i = 0; i < group_column_indices.size(); i++) {
             AppendToKey(key, merged->GetColumn(group_column_indices[i]), group_column_types[i], row);
         }
@@ -132,31 +158,20 @@ std::shared_ptr<Batch> GroupByAggregationOperator::Next() {
     }
 
     size_t result_rows = group_representative_rows.size();
-    size_t sub_columns_count = merged_schema->GetColumnsNumber();
-    std::vector<std::vector<char>> agg_bufs;
-    std::vector<Type> aggregation_types;
-    std::vector<std::string> aggregation_names;
 
     for (size_t group_index = 0; group_index < result_rows; group_index++) {
         const std::vector<size_t>& row_indices = group_row_indices[group_index];
         std::vector<std::shared_ptr<Column>> sub_columns_vec;
-        for (size_t j = 0; j < sub_columns_count; j++) {
-            sub_columns_vec.push_back(CopyRowsTyped(merged->GetColumn(j), merged_schema->GetType(j), row_indices));
+        for (size_t i : sub_column_indices) {
+            sub_columns_vec.push_back(CopyRowsTyped(merged->GetColumn(i), merged_schema->GetType(i), row_indices));
         }
-        std::shared_ptr<Batch> sub = std::make_shared<Batch>(row_indices.size(), merged_schema, std::move(sub_columns_vec));
+        std::shared_ptr<Batch> sub = std::make_shared<Batch>(row_indices.size(), sub_schema, std::move(sub_columns_vec));
         std::vector<std::shared_ptr<AggregationFunction>> aggregations = aggregation_factory_();
-        for (std::shared_ptr<AggregationFunction>& agg : aggregations) {
-            agg->Update(sub);
-        }
-        if (agg_bufs.empty()) {
-            agg_bufs.resize(aggregations.size());
-            for (std::shared_ptr<AggregationFunction>& agg : aggregations) {
-                aggregation_types.push_back(agg->GetType());
-                aggregation_names.push_back(agg->GetName());
-            }
+        for (std::shared_ptr<AggregationFunction>& aggregation : aggregations) {
+            aggregation->Update(sub);
         }
         for (size_t i = 0; i < aggregations.size(); i++) {
-            aggregations[i]->AppendResultBytes(agg_bufs[i]);
+            aggregations[i]->AppendResultBytes(aggregation_bufs[i]);
         }
     }
 
@@ -174,7 +189,7 @@ std::shared_ptr<Batch> GroupByAggregationOperator::Next() {
         result_columns.push_back(CopyRowsTyped(merged->GetColumn(group_column_indices[i]), group_column_types[i], group_representative_rows));
     }
     for (size_t i = 0; i < aggregation_names.size(); i++) {
-        result_columns.push_back(MakeColumnFromBytes(agg_bufs[i], aggregation_types[i], result_rows));
+        result_columns.push_back(MakeColumnFromBytes(aggregation_bufs[i], aggregation_types[i], result_rows));
     }
 
     return std::make_shared<Batch>(result_rows, std::make_shared<Schema>(std::move(result_names), std::move(result_types)), std::move(result_columns));

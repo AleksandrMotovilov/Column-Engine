@@ -1,4 +1,4 @@
-#include "src/kernel/encoding_bitpack.h"
+#include "src/compression/encoding_bitpack.h"
 
 int BitsRequired(uint64_t max_value) {
     if (max_value == 0) {

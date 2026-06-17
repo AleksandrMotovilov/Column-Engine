@@ -1,4 +1,5 @@
 #include "src/kernel/reader_writer_clmn.h"
+#include <numeric>
 
 std::shared_ptr<Column> ReadColumnFromClmn(std::ifstream& fin, Type type, size_t rows_number, size_t flags) {
     size_t encoded_size;
@@ -15,7 +16,7 @@ void WriteColumnToClmn(std::ofstream& fout, std::shared_ptr<Column> column, Type
     fout.write(reinterpret_cast<char*>(encoded.data()), encoded_size);
 }
 
-ReaderClmn::ReaderClmn(const std::string& file_clmn) {
+ReaderClmn::ReaderClmn(const std::string& file_clmn, std::optional<std::vector<std::string>> columns_names) {
     current_batch_ = 0;
     rows_number_ = 0;
     columns_number_ = 0;
@@ -23,6 +24,7 @@ ReaderClmn::ReaderClmn(const std::string& file_clmn) {
     compression_flags_ = 0;
     schema_offset_ = 0;
     schema_read_ = false;
+    requested_columns_ = std::move(columns_names);
     fin_.open(file_clmn, std::ios::binary);
     if (!fin_.is_open()) {
         throw std::runtime_error("Cannot open file {" + file_clmn + "} :: ReaderClmn");
@@ -41,16 +43,33 @@ ReaderClmn::~ReaderClmn() {
 
 void ReaderClmn::ReadSchema() {
     fin_.seekg(-schema_offset_, std::ios::end);
-    std::vector<std::string> columns_names(columns_number_);
-    std::vector<Type> columns_types(columns_number_);
+    std::vector<std::string> all_names(columns_number_);
+    std::vector<Type> all_types(columns_number_);
     for (size_t i = 0; i < columns_number_; i++) {
-        fin_.read(reinterpret_cast<char*>(&columns_types[i]), sizeof(uint8_t));
+        fin_.read(reinterpret_cast<char*>(&all_types[i]), sizeof(uint8_t));
         size_t name_size;
         fin_.read(reinterpret_cast<char*>(&name_size), sizeof(size_t));
-        columns_names[i].resize(name_size);
-        fin_.read(&columns_names[i][0], name_size);
+        all_names[i].resize(name_size);
+        fin_.read(&all_names[i][0], name_size);
     }
-    schema_ = std::make_shared<Schema>(std::move(columns_names), std::move(columns_types));
+    if (!requested_columns_.has_value()) {
+        selected_indices_.resize(all_names.size());
+        std::iota(selected_indices_.begin(), selected_indices_.end(), 0);
+        schema_ = std::make_shared<Schema>(std::move(all_names), std::move(all_types));
+    } else {
+        Schema full_schema(all_names, all_types);
+        std::vector<std::string> selected_names;
+        std::vector<Type> selected_types;
+        for (const std::string& column_name : *requested_columns_) {
+            size_t index = full_schema.FindColumn(column_name);
+            if (index < columns_number_) {
+                selected_indices_.push_back(index);
+                selected_names.push_back(column_name);
+                selected_types.push_back(all_types[index]);
+            }
+        }
+        schema_ = std::make_shared<Schema>(std::move(selected_names), std::move(selected_types));
+    }
     schema_read_ = true;
     fin_.seekg(0, std::ios::beg);
 }
@@ -81,49 +100,15 @@ std::shared_ptr<Batch> ReaderClmn::ReadBatch() {
     }
     size_t next_batch_pos = static_cast<size_t>(fin_.tellg());
     std::vector<std::shared_ptr<Column>> columns;
-    columns.reserve(columns_number_);
-    for (size_t i = 0; i < columns_number_; i++) {
+    columns.reserve(selected_indices_.size());
+    for (size_t j = 0; j < selected_indices_.size(); j++) {
+        size_t i = selected_indices_[j];
         fin_.seekg(batch_start + column_offsets[i], std::ios::beg);
-        columns.push_back(ReadColumnFromClmn(fin_, schema_->GetType(i), batch_rows_number, compression_flags_));
+        columns.push_back(ReadColumnFromClmn(fin_, schema_->GetType(j), batch_rows_number, compression_flags_));
     }
     fin_.seekg(next_batch_pos, std::ios::beg);
     current_batch_++;
     return std::make_shared<Batch>(batch_rows_number, schema_, std::move(columns));
-}
-
-std::shared_ptr<Batch> ReaderClmn::ReadBatchColumns(const std::vector<std::string>& columns_names) {
-    if (!schema_read_) {
-        throw std::runtime_error("ReadSchema must be called before ReadBatchColumns :: ReaderClmn");
-    }
-    if (current_batch_ >= batches_number_) {
-        return nullptr;
-    }
-    size_t batch_start = static_cast<size_t>(fin_.tellg());
-    size_t metadata_offset;
-    fin_.read(reinterpret_cast<char*>(&metadata_offset), sizeof(size_t));
-    fin_.seekg(batch_start + metadata_offset, std::ios::beg);
-    size_t batch_rows;
-    fin_.read(reinterpret_cast<char*>(&batch_rows), sizeof(size_t));
-    std::vector<size_t> column_offsets(columns_number_);
-    for (size_t i = 0; i < columns_number_; i++) {
-        fin_.read(reinterpret_cast<char*>(&column_offsets[i]), sizeof(size_t));
-    }
-    size_t next_batch_pos = static_cast<size_t>(fin_.tellg());
-    std::vector<std::string> names;
-    std::vector<Type> types;
-    std::vector<std::shared_ptr<Column>> columns;
-    for (const std::string& column_name : columns_names) {
-        size_t index = schema_->FindColumn(column_name);
-        if (index < columns_number_) {
-            names.push_back(column_name);
-            types.push_back(schema_->GetType(index));
-            fin_.seekg(batch_start + column_offsets[index], std::ios::beg);
-            columns.push_back(ReadColumnFromClmn(fin_, schema_->GetType(index), batch_rows, compression_flags_));
-        }
-    }
-    fin_.seekg(next_batch_pos, std::ios::beg);
-    current_batch_++;
-    return std::make_shared<Batch>(batch_rows, std::make_shared<Schema>(std::move(names), std::move(types)), std::move(columns));
 }
 
 WriterClmn::WriterClmn(const std::string& file_clmn) {

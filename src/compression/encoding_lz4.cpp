@@ -1,4 +1,4 @@
-#include "src/kernel/encoding_lz4.h"
+#include "src/compression/encoding_lz4.h"
 
 std::vector<char> Lz4Compress(const std::vector<char>& input) {
     int uncompressed_size = static_cast<int>(input.size());
