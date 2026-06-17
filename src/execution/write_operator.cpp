@@ -1,4 +1,4 @@
-#include "src/execution/write_operators.h"
+#include "src/execution/write_operator.h"
 
 WriteOperator::WriteOperator(const std::string& file_csv, const std::string& file_schema, std::shared_ptr<Operator> next) {
     next_ = std::move(next);

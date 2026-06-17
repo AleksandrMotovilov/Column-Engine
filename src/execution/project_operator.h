@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include "src/execution/expressions.h"
-#include "src/execution/operators.h"
+#include "src/execution/operator.h"
 #include "src/kernel/batch.h"
 
 class ProjectOperator : public Operator {

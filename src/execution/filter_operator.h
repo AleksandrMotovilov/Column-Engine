@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 #include "src/execution/expressions.h"
-#include "src/execution/operators.h"
+#include "src/execution/operator.h"
 #include "src/kernel/batch.h"
 #include "src/kernel/column_utils.h"
 

@@ -2,8 +2,8 @@
 
 #include <memory>
 #include <string>
-#include "src/execution/operators.h"
-#include "src/kernel/reader_writer_csv.h"
+#include "src/execution/operator.h"
+#include "src/convertion/reader_writer_csv.h"
 
 class WriteOperator : public Operator {
 public:

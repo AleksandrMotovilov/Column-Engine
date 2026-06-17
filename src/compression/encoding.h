@@ -29,7 +29,7 @@ constexpr size_t kFlagAdaptive = 2048u;
 
 size_t GetCompressionFlags();
 
-void choose_best_flags(size_t& best_flags, size_t& best_size, size_t flags, size_t size);
+void ChooseBestFlags(size_t& best_flags, size_t& best_size, size_t flags, size_t size);
 
 template<typename T>
 std::vector<char> EncodeIntegerVector(const std::vector<T>& input, size_t flags) {
@@ -61,16 +61,16 @@ std::vector<char> EncodeIntegerVector(const std::vector<T>& input, size_t flags)
 
         size_t best_size = EstimateRaw<T>(input);
         size_t best_flags = 0;
-        choose_best_flags(best_flags, best_size, kFlagBitPackInt, EstimateIntegerBitpack<T>(input, false));
-        choose_best_flags(best_flags, best_size, kFlagDeltaInt | kFlagBitPackInt, EstimateIntegerBitpack<T>(delta_input, true));
-        choose_best_flags(best_flags, best_size, kFlagRleInt, rle_without_bp);
-        choose_best_flags(best_flags, best_size, kFlagRleInt | kFlagBitPackInt, rle_with_bp);
-        choose_best_flags(best_flags, best_size, kFlagDeltaInt | kFlagRleInt, rle_delta_without_bp);
-        choose_best_flags(best_flags, best_size, kFlagDeltaInt | kFlagRleInt | kFlagBitPackInt, rle_delta_with_bp);
-        choose_best_flags(best_flags, best_size, kFlagDictInt, dict_without_bp);
-        choose_best_flags(best_flags, best_size, kFlagDictInt | kFlagBitPackInt, dict_with_bp);
-        choose_best_flags(best_flags, best_size, kFlagDeltaInt | kFlagDictInt, dict_delta_without_bp);
-        choose_best_flags(best_flags, best_size, kFlagDeltaInt | kFlagDictInt | kFlagBitPackInt, dict_delta_with_bp);
+        ChooseBestFlags(best_flags, best_size, kFlagBitPackInt, EstimateIntegerBitpack<T>(input, false));
+        ChooseBestFlags(best_flags, best_size, kFlagDeltaInt | kFlagBitPackInt, EstimateIntegerBitpack<T>(delta_input, true));
+        ChooseBestFlags(best_flags, best_size, kFlagRleInt, rle_without_bp);
+        ChooseBestFlags(best_flags, best_size, kFlagRleInt | kFlagBitPackInt, rle_with_bp);
+        ChooseBestFlags(best_flags, best_size, kFlagDeltaInt | kFlagRleInt, rle_delta_without_bp);
+        ChooseBestFlags(best_flags, best_size, kFlagDeltaInt | kFlagRleInt | kFlagBitPackInt, rle_delta_with_bp);
+        ChooseBestFlags(best_flags, best_size, kFlagDictInt, dict_without_bp);
+        ChooseBestFlags(best_flags, best_size, kFlagDictInt | kFlagBitPackInt, dict_with_bp);
+        ChooseBestFlags(best_flags, best_size, kFlagDeltaInt | kFlagDictInt, dict_delta_without_bp);
+        ChooseBestFlags(best_flags, best_size, kFlagDeltaInt | kFlagDictInt | kFlagBitPackInt, dict_delta_with_bp);
 
         flags = best_flags;
     }
@@ -195,10 +195,10 @@ std::vector<char> EncodeFloatVector(const std::vector<T>& input, size_t flags) {
 
         size_t best_size = EstimateRaw<T>(input);
         size_t best_flags = 0;
-        choose_best_flags(best_flags, best_size, kFlagRleFloat, rle_without_bp);
-        choose_best_flags(best_flags, best_size, kFlagRleFloat | kFlagBitPackFloat, rle_with_bp);
-        choose_best_flags(best_flags, best_size, kFlagDictFloat, dict_without_bp);
-        choose_best_flags(best_flags, best_size, kFlagDictFloat | kFlagBitPackFloat, dict_with_bp);
+        ChooseBestFlags(best_flags, best_size, kFlagRleFloat, rle_without_bp);
+        ChooseBestFlags(best_flags, best_size, kFlagRleFloat | kFlagBitPackFloat, rle_with_bp);
+        ChooseBestFlags(best_flags, best_size, kFlagDictFloat, dict_without_bp);
+        ChooseBestFlags(best_flags, best_size, kFlagDictFloat | kFlagBitPackFloat, dict_with_bp);
 
         flags = best_flags;
     }

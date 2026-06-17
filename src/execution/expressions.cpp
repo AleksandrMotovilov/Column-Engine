@@ -15,7 +15,7 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
     std::vector<char> result(rows_number);
     switch (column_type) {
         case Type::Int16: {
-            const std::vector<int16_t>& column_data = dynamic_cast<const ColumnTyped<int16_t>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<int16_t>& column_data = static_cast<const ColumnTyped<int16_t>&>(*batch->GetColumn(index)).GetData();
             int16_t threshold = FromString<int16_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] == threshold) {
@@ -27,7 +27,7 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
             break;
         }
         case Type::Int32: {
-            const std::vector<int32_t>& column_data = dynamic_cast<const ColumnTyped<int32_t>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<int32_t>& column_data = static_cast<const ColumnTyped<int32_t>&>(*batch->GetColumn(index)).GetData();
             int32_t threshold = FromString<int32_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] == threshold) {
@@ -39,7 +39,7 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
             break;
         }
         case Type::Int64: {
-            const std::vector<int64_t>& column_data = dynamic_cast<const ColumnTyped<int64_t>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<int64_t>& column_data = static_cast<const ColumnTyped<int64_t>&>(*batch->GetColumn(index)).GetData();
             int64_t threshold = FromString<int64_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] == threshold) {
@@ -51,7 +51,7 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
             break;
         }
         case Type::Float: {
-            const std::vector<float>& column_data = dynamic_cast<const ColumnTyped<float>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<float>& column_data = static_cast<const ColumnTyped<float>&>(*batch->GetColumn(index)).GetData();
             float threshold = FromString<float>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] == threshold) {
@@ -63,7 +63,7 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
             break;
         }
         case Type::Double: {
-            const std::vector<double>& column_data = dynamic_cast<const ColumnTyped<double>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<double>& column_data = static_cast<const ColumnTyped<double>&>(*batch->GetColumn(index)).GetData();
             double threshold = FromString<double>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] == threshold) {
@@ -75,7 +75,7 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
             break;
         }
         case Type::Date: {
-            const std::vector<Date>& column_data = dynamic_cast<const ColumnTyped<Date>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<Date>& column_data = static_cast<const ColumnTyped<Date>&>(*batch->GetColumn(index)).GetData();
             Date threshold = FromString<Date>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] == threshold) {
@@ -87,7 +87,7 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
             break;
         }
         case Type::Timestamp: {
-            const std::vector<Timestamp>& column_data = dynamic_cast<const ColumnTyped<Timestamp>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<Timestamp>& column_data = static_cast<const ColumnTyped<Timestamp>&>(*batch->GetColumn(index)).GetData();
             Timestamp threshold = FromString<Timestamp>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] == threshold) {
@@ -99,7 +99,7 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
             break;
         }
         case Type::Char: {
-            const std::vector<char>& column_data = dynamic_cast<const ColumnTyped<char>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<char>& column_data = static_cast<const ColumnTyped<char>&>(*batch->GetColumn(index)).GetData();
             char threshold = FromString<char>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] == threshold) {
@@ -111,7 +111,7 @@ std::shared_ptr<Column> EqualExpression::Eval(std::shared_ptr<Batch> batch) cons
             break;
         }
         case Type::String: {
-            const std::vector<std::string>& column_data = dynamic_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<std::string>& column_data = static_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] == value_) {
                     result[i] = '1';
@@ -147,7 +147,7 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
     std::vector<char> result(rows_number);
     switch (column_type) {
         case Type::Int16: {
-            const std::vector<int16_t>& column_data = dynamic_cast<const ColumnTyped<int16_t>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<int16_t>& column_data = static_cast<const ColumnTyped<int16_t>&>(*batch->GetColumn(index)).GetData();
             int16_t threshold = FromString<int16_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] != threshold) {
@@ -159,7 +159,7 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
             break;
         }
         case Type::Int32: {
-            const std::vector<int32_t>& column_data = dynamic_cast<const ColumnTyped<int32_t>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<int32_t>& column_data = static_cast<const ColumnTyped<int32_t>&>(*batch->GetColumn(index)).GetData();
             int32_t threshold = FromString<int32_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] != threshold) {
@@ -171,7 +171,7 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
             break;
         }
         case Type::Int64: {
-            const std::vector<int64_t>& column_data = dynamic_cast<const ColumnTyped<int64_t>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<int64_t>& column_data = static_cast<const ColumnTyped<int64_t>&>(*batch->GetColumn(index)).GetData();
             int64_t threshold = FromString<int64_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] != threshold) {
@@ -183,7 +183,7 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
             break;
         }
         case Type::Float: {
-            const std::vector<float>& column_data = dynamic_cast<const ColumnTyped<float>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<float>& column_data = static_cast<const ColumnTyped<float>&>(*batch->GetColumn(index)).GetData();
             float threshold = FromString<float>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] != threshold) {
@@ -195,7 +195,7 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
             break;
         }
         case Type::Double: {
-            const std::vector<double>& column_data = dynamic_cast<const ColumnTyped<double>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<double>& column_data = static_cast<const ColumnTyped<double>&>(*batch->GetColumn(index)).GetData();
             double threshold = FromString<double>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] != threshold) {
@@ -207,7 +207,7 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
             break;
         }
         case Type::Date: {
-            const std::vector<Date>& column_data = dynamic_cast<const ColumnTyped<Date>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<Date>& column_data = static_cast<const ColumnTyped<Date>&>(*batch->GetColumn(index)).GetData();
             Date threshold = FromString<Date>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] != threshold) {
@@ -219,7 +219,7 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
             break;
         }
         case Type::Timestamp: {
-            const std::vector<Timestamp>& column_data = dynamic_cast<const ColumnTyped<Timestamp>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<Timestamp>& column_data = static_cast<const ColumnTyped<Timestamp>&>(*batch->GetColumn(index)).GetData();
             Timestamp threshold = FromString<Timestamp>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] != threshold) {
@@ -231,7 +231,7 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
             break;
         }
         case Type::Char: {
-            const std::vector<char>& column_data = dynamic_cast<const ColumnTyped<char>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<char>& column_data = static_cast<const ColumnTyped<char>&>(*batch->GetColumn(index)).GetData();
             char threshold = FromString<char>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] != threshold) {
@@ -243,7 +243,7 @@ std::shared_ptr<Column> NotEqualExpression::Eval(std::shared_ptr<Batch> batch) c
             break;
         }
         case Type::String: {
-            const std::vector<std::string>& column_data = dynamic_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<std::string>& column_data = static_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] != value_) {
                     result[i] = '1';
@@ -279,7 +279,7 @@ std::shared_ptr<Column> GreaterOrEqualExpression::Eval(std::shared_ptr<Batch> ba
     std::vector<char> result(rows_number);
     switch (column_type) {
         case Type::Int16: {
-            const std::vector<int16_t>& column_data = dynamic_cast<const ColumnTyped<int16_t>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<int16_t>& column_data = static_cast<const ColumnTyped<int16_t>&>(*batch->GetColumn(index)).GetData();
             int16_t threshold = FromString<int16_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] >= threshold) {
@@ -291,7 +291,7 @@ std::shared_ptr<Column> GreaterOrEqualExpression::Eval(std::shared_ptr<Batch> ba
             break;
         }
         case Type::Int32: {
-            const std::vector<int32_t>& column_data = dynamic_cast<const ColumnTyped<int32_t>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<int32_t>& column_data = static_cast<const ColumnTyped<int32_t>&>(*batch->GetColumn(index)).GetData();
             int32_t threshold = FromString<int32_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] >= threshold) {
@@ -303,7 +303,7 @@ std::shared_ptr<Column> GreaterOrEqualExpression::Eval(std::shared_ptr<Batch> ba
             break;
         }
         case Type::Int64: {
-            const std::vector<int64_t>& column_data = dynamic_cast<const ColumnTyped<int64_t>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<int64_t>& column_data = static_cast<const ColumnTyped<int64_t>&>(*batch->GetColumn(index)).GetData();
             int64_t threshold = FromString<int64_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] >= threshold) {
@@ -315,7 +315,7 @@ std::shared_ptr<Column> GreaterOrEqualExpression::Eval(std::shared_ptr<Batch> ba
             break;
         }
         case Type::Float: {
-            const std::vector<float>& column_data = dynamic_cast<const ColumnTyped<float>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<float>& column_data = static_cast<const ColumnTyped<float>&>(*batch->GetColumn(index)).GetData();
             float threshold = FromString<float>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] >= threshold) {
@@ -327,7 +327,7 @@ std::shared_ptr<Column> GreaterOrEqualExpression::Eval(std::shared_ptr<Batch> ba
             break;
         }
         case Type::Double: {
-            const std::vector<double>& column_data = dynamic_cast<const ColumnTyped<double>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<double>& column_data = static_cast<const ColumnTyped<double>&>(*batch->GetColumn(index)).GetData();
             double threshold = FromString<double>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] >= threshold) {
@@ -339,7 +339,7 @@ std::shared_ptr<Column> GreaterOrEqualExpression::Eval(std::shared_ptr<Batch> ba
             break;
         }
         case Type::Date: {
-            const std::vector<Date>& column_data = dynamic_cast<const ColumnTyped<Date>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<Date>& column_data = static_cast<const ColumnTyped<Date>&>(*batch->GetColumn(index)).GetData();
             Date threshold = FromString<Date>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] >= threshold) {
@@ -351,7 +351,7 @@ std::shared_ptr<Column> GreaterOrEqualExpression::Eval(std::shared_ptr<Batch> ba
             break;
         }
         case Type::Timestamp: {
-            const std::vector<Timestamp>& column_data = dynamic_cast<const ColumnTyped<Timestamp>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<Timestamp>& column_data = static_cast<const ColumnTyped<Timestamp>&>(*batch->GetColumn(index)).GetData();
             Timestamp threshold = FromString<Timestamp>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] >= threshold) {
@@ -363,7 +363,7 @@ std::shared_ptr<Column> GreaterOrEqualExpression::Eval(std::shared_ptr<Batch> ba
             break;
         }
         case Type::String: {
-            const std::vector<std::string>& column_data = dynamic_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<std::string>& column_data = static_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] >= value_) {
                     result[i] = '1';
@@ -399,7 +399,7 @@ std::shared_ptr<Column> LessOrEqualExpression::Eval(std::shared_ptr<Batch> batch
     std::vector<char> result(rows_number);
     switch (column_type) {
         case Type::Int16: {
-            const std::vector<int16_t>& column_data = dynamic_cast<const ColumnTyped<int16_t>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<int16_t>& column_data = static_cast<const ColumnTyped<int16_t>&>(*batch->GetColumn(index)).GetData();
             int16_t threshold = FromString<int16_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] <= threshold) {
@@ -411,7 +411,7 @@ std::shared_ptr<Column> LessOrEqualExpression::Eval(std::shared_ptr<Batch> batch
             break;
         }
         case Type::Int32: {
-            const std::vector<int32_t>& column_data = dynamic_cast<const ColumnTyped<int32_t>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<int32_t>& column_data = static_cast<const ColumnTyped<int32_t>&>(*batch->GetColumn(index)).GetData();
             int32_t threshold = FromString<int32_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] <= threshold) {
@@ -423,7 +423,7 @@ std::shared_ptr<Column> LessOrEqualExpression::Eval(std::shared_ptr<Batch> batch
             break;
         }
         case Type::Int64: {
-            const std::vector<int64_t>& column_data = dynamic_cast<const ColumnTyped<int64_t>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<int64_t>& column_data = static_cast<const ColumnTyped<int64_t>&>(*batch->GetColumn(index)).GetData();
             int64_t threshold = FromString<int64_t>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] <= threshold) {
@@ -435,7 +435,7 @@ std::shared_ptr<Column> LessOrEqualExpression::Eval(std::shared_ptr<Batch> batch
             break;
         }
         case Type::Float: {
-            const std::vector<float>& column_data = dynamic_cast<const ColumnTyped<float>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<float>& column_data = static_cast<const ColumnTyped<float>&>(*batch->GetColumn(index)).GetData();
             float threshold = FromString<float>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] <= threshold) {
@@ -447,7 +447,7 @@ std::shared_ptr<Column> LessOrEqualExpression::Eval(std::shared_ptr<Batch> batch
             break;
         }
         case Type::Double: {
-            const std::vector<double>& column_data = dynamic_cast<const ColumnTyped<double>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<double>& column_data = static_cast<const ColumnTyped<double>&>(*batch->GetColumn(index)).GetData();
             double threshold = FromString<double>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] <= threshold) {
@@ -459,7 +459,7 @@ std::shared_ptr<Column> LessOrEqualExpression::Eval(std::shared_ptr<Batch> batch
             break;
         }
         case Type::Date: {
-            const std::vector<Date>& column_data = dynamic_cast<const ColumnTyped<Date>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<Date>& column_data = static_cast<const ColumnTyped<Date>&>(*batch->GetColumn(index)).GetData();
             Date threshold = FromString<Date>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] <= threshold) {
@@ -471,7 +471,7 @@ std::shared_ptr<Column> LessOrEqualExpression::Eval(std::shared_ptr<Batch> batch
             break;
         }
         case Type::Timestamp: {
-            const std::vector<Timestamp>& column_data = dynamic_cast<const ColumnTyped<Timestamp>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<Timestamp>& column_data = static_cast<const ColumnTyped<Timestamp>&>(*batch->GetColumn(index)).GetData();
             Timestamp threshold = FromString<Timestamp>(value_);
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] <= threshold) {
@@ -483,7 +483,7 @@ std::shared_ptr<Column> LessOrEqualExpression::Eval(std::shared_ptr<Batch> batch
             break;
         }
         case Type::String: {
-            const std::vector<std::string>& column_data = dynamic_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<std::string>& column_data = static_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
             for (size_t i = 0; i < rows_number; i++) {
                 if (column_data[i] <= value_) {
                     result[i] = '1';
@@ -514,7 +514,7 @@ std::shared_ptr<Column> ContainsExpression::Eval(std::shared_ptr<Batch> batch) c
     if (index == batch->GetColumnsNumber()) {
         throw std::runtime_error("Column not found: " + column_name_ + " :: ContainsExpression");
     }
-    const std::vector<std::string>& column_data = dynamic_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
+    const std::vector<std::string>& column_data = static_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
     size_t rows_number = batch->GetRowsNumber();
     std::vector<char> result(rows_number);
     for (size_t i = 0; i < rows_number; i++) {
@@ -541,7 +541,7 @@ std::shared_ptr<Column> NotContainsExpression::Eval(std::shared_ptr<Batch> batch
     if (index == batch->GetColumnsNumber()) {
         throw std::runtime_error("Column not found: " + column_name_ + " :: NotContainsExpression");
     }
-    const std::vector<std::string>& column_data = dynamic_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
+    const std::vector<std::string>& column_data = static_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
     size_t rows_number = batch->GetRowsNumber();
     std::vector<char> result(rows_number);
     for (size_t i = 0; i < rows_number; i++) {
@@ -566,8 +566,8 @@ AndExpression::AndExpression(std::shared_ptr<Expression> left, std::shared_ptr<E
 std::shared_ptr<Column> AndExpression::Eval(std::shared_ptr<Batch> batch) const {
     std::shared_ptr<Column> left_col = left_->Eval(batch);
     std::shared_ptr<Column> right_col = right_->Eval(batch);
-    const std::vector<char>& left_data = dynamic_cast<const ColumnTyped<char>&>(*left_col).GetData();
-    const std::vector<char>& right_data = dynamic_cast<const ColumnTyped<char>&>(*right_col).GetData();
+    const std::vector<char>& left_data = static_cast<const ColumnTyped<char>&>(*left_col).GetData();
+    const std::vector<char>& right_data = static_cast<const ColumnTyped<char>&>(*right_col).GetData();
     size_t rows_number = batch->GetRowsNumber();
     std::vector<char> result(rows_number);
     for (size_t i = 0; i < rows_number; i++) {
@@ -592,8 +592,8 @@ OrExpression::OrExpression(std::shared_ptr<Expression> left, std::shared_ptr<Exp
 std::shared_ptr<Column> OrExpression::Eval(std::shared_ptr<Batch> batch) const {
     std::shared_ptr<Column> left_column = left_->Eval(batch);
     std::shared_ptr<Column> right_column = right_->Eval(batch);
-    const std::vector<char>& left_data = dynamic_cast<const ColumnTyped<char>&>(*left_column).GetData();
-    const std::vector<char>& right_data = dynamic_cast<const ColumnTyped<char>&>(*right_column).GetData();
+    const std::vector<char>& left_data = static_cast<const ColumnTyped<char>&>(*left_column).GetData();
+    const std::vector<char>& right_data = static_cast<const ColumnTyped<char>&>(*right_column).GetData();
     size_t rows_number = batch->GetRowsNumber();
     std::vector<char> result(rows_number);
     for (size_t i = 0; i < rows_number; i++) {
@@ -639,21 +639,21 @@ std::shared_ptr<Column> SumExpression::Eval(std::shared_ptr<Batch> batch) const 
     std::vector<int64_t> result(rows_number);
     switch (column_type) {
         case Type::Int16: {
-            const std::vector<int16_t>& column_data = dynamic_cast<const ColumnTyped<int16_t>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<int16_t>& column_data = static_cast<const ColumnTyped<int16_t>&>(*batch->GetColumn(index)).GetData();
             for (size_t i = 0; i < rows_number; i++) {
                 result[i] = static_cast<int64_t>(column_data[i]) + constant_;
             }
             break;
         }
         case Type::Int32: {
-            const std::vector<int32_t>& column_data = dynamic_cast<const ColumnTyped<int32_t>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<int32_t>& column_data = static_cast<const ColumnTyped<int32_t>&>(*batch->GetColumn(index)).GetData();
             for (size_t i = 0; i < rows_number; i++) {
                 result[i] = static_cast<int64_t>(column_data[i]) + constant_;
             }
             break;
         }
         case Type::Int64: {
-            const std::vector<int64_t>& column_data = dynamic_cast<const ColumnTyped<int64_t>&>(*batch->GetColumn(index)).GetData();
+            const std::vector<int64_t>& column_data = static_cast<const ColumnTyped<int64_t>&>(*batch->GetColumn(index)).GetData();
             for (size_t i = 0; i < rows_number; i++) {
                 result[i] = column_data[i] + constant_;
             }
@@ -679,7 +679,7 @@ std::shared_ptr<Column> LengthExpression::Eval(std::shared_ptr<Batch> batch) con
     if (index == batch->GetColumnsNumber()) {
         throw std::runtime_error("Column not found: " + column_name_ + " :: LengthExpression");
     }
-    const std::vector<std::string>& column_data = dynamic_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
+    const std::vector<std::string>& column_data = static_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
     size_t rows_number = batch->GetRowsNumber();
     std::vector<int64_t> result(rows_number);
     for (size_t i = 0; i < rows_number; i++) {
@@ -702,7 +702,7 @@ std::shared_ptr<Column> RegexpReplaceExpression::Eval(std::shared_ptr<Batch> bat
     if (index == batch->GetColumnsNumber()) {
         throw std::runtime_error("Column not found: " + column_name_ + " :: RegexpReplaceExpression");
     }
-    const std::vector<std::string>& column_data = dynamic_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
+    const std::vector<std::string>& column_data = static_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
     size_t rows_number = batch->GetRowsNumber();
     std::vector<std::string> result(rows_number);
     for (size_t i = 0; i < rows_number; i++) {
@@ -724,12 +724,12 @@ CaseWhenExpression::CaseWhenExpression(std::shared_ptr<Expression> condition, st
 
 std::shared_ptr<Column> CaseWhenExpression::Eval(std::shared_ptr<Batch> batch) const {
     std::shared_ptr<Column> mask_column = condition_->Eval(batch);
-    const std::vector<char>& mask = dynamic_cast<const ColumnTyped<char>&>(*mask_column).GetData();
+    const std::vector<char>& mask = static_cast<const ColumnTyped<char>&>(*mask_column).GetData();
     size_t index = batch->FindColumn(then_column_);
     if (index == batch->GetColumnsNumber()) {
         throw std::runtime_error("Column not found: " + then_column_ + " :: CaseWhenExpression");
     }
-    const std::vector<std::string>& column_data = dynamic_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
+    const std::vector<std::string>& column_data = static_cast<const ColumnTyped<std::string>&>(*batch->GetColumn(index)).GetData();
     size_t rows_number = batch->GetRowsNumber();
     std::vector<std::string> result(rows_number);
     for (size_t i = 0; i < rows_number; i++) {
@@ -755,7 +755,7 @@ std::shared_ptr<Column> TruncateToMinuteExpression::Eval(std::shared_ptr<Batch> 
     if (index == batch->GetColumnsNumber()) {
         throw std::runtime_error("Column not found: " + column_name_ + " :: TruncateToMinuteExpression");
     }
-    const std::vector<Timestamp>& column_data = dynamic_cast<const ColumnTyped<Timestamp>&>(*batch->GetColumn(index)).GetData();
+    const std::vector<Timestamp>& column_data = static_cast<const ColumnTyped<Timestamp>&>(*batch->GetColumn(index)).GetData();
     size_t rows_number = batch->GetRowsNumber();
     std::vector<Timestamp> result(rows_number);
     for (size_t i = 0; i < rows_number; i++) {
@@ -777,7 +777,7 @@ std::shared_ptr<Column> ExtractMinuteExpression::Eval(std::shared_ptr<Batch> bat
     if (index == batch->GetColumnsNumber()) {
         throw std::runtime_error("Column not found: " + column_name_ + " :: ExtractMinuteExpression");
     }
-    const std::vector<Timestamp>& column_data = dynamic_cast<const ColumnTyped<Timestamp>&>(*batch->GetColumn(index)).GetData();
+    const std::vector<Timestamp>& column_data = static_cast<const ColumnTyped<Timestamp>&>(*batch->GetColumn(index)).GetData();
     size_t rows_number = batch->GetRowsNumber();
     std::vector<int64_t> result(rows_number);
     for (size_t i = 0; i < rows_number; i++) {

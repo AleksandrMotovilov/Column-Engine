@@ -1,4 +1,4 @@
-#include "src/execution/sort_operators.h"
+#include "src/execution/sort_operator.h"
 
 SortOperator::SortOperator(std::shared_ptr<Operator> next, std::string sort_column, bool descending) {
     next_ = std::move(next);

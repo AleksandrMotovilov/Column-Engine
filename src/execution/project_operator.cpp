@@ -1,4 +1,4 @@
-#include "src/execution/project_operators.h"
+#include "src/execution/project_operator.h"
 
 ProjectOperator::ProjectOperator(std::shared_ptr<Operator> next, std::shared_ptr<Expression> expr, std::string column_name) {
     next_ = std::move(next);

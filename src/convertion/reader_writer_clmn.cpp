@@ -1,4 +1,4 @@
-#include "src/kernel/reader_writer_clmn.h"
+#include "src/convertion/reader_writer_clmn.h"
 #include <numeric>
 
 std::shared_ptr<Column> ReadColumnFromClmn(std::ifstream& fin, Type type, size_t rows_number, size_t flags) {

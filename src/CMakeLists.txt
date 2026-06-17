@@ -56,11 +56,11 @@ if(ENABLE_ADAPTIVE)
   target_compile_definitions(encoding PUBLIC ENABLE_ADAPTIVE)
 endif()
 
-add_library(reader_writer_clmn kernel/reader_writer_clmn.cpp)
+add_library(reader_writer_clmn convertion/reader_writer_clmn.cpp)
 target_include_directories(reader_writer_clmn PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(reader_writer_clmn PUBLIC objects encoding)
 
-add_library(reader_writer_csv kernel/reader_writer_csv.cpp)
+add_library(reader_writer_csv convertion/reader_writer_csv.cpp)
 target_include_directories(reader_writer_csv PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(reader_writer_csv PUBLIC objects)
 
@@ -75,15 +75,15 @@ target_link_libraries(converter_from_clmn_to_csv PUBLIC reader_writer_clmn reade
 add_library(execution
     execution/expressions.cpp
     execution/aggregation_functions.cpp
-    execution/filter_operators.cpp
-    execution/project_operators.cpp
-    execution/scan_operators.cpp
-    execution/global_aggregation_operators.cpp
-    execution/group_by_aggregation_operators.cpp
-    execution/top_k_operators.cpp
-    execution/sort_operators.cpp
-    execution/limit_operators.cpp
-    execution/write_operators.cpp
+    execution/filter_operator.cpp
+    execution/project_operator.cpp
+    execution/scan_operator.cpp
+    execution/global_aggregation_operator.cpp
+    execution/group_by_aggregation_operator.cpp
+    execution/top_k_operator.cpp
+    execution/sort_operator.cpp
+    execution/limit_operator.cpp
+    execution/write_operator.cpp
 )
 find_library(RE2_LIB re2 REQUIRED)
 find_path(RE2_INCLUDE_DIR re2/re2.h REQUIRED)

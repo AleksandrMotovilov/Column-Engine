@@ -46,7 +46,7 @@ size_t GetCompressionFlags() {
     return flags;
 }
 
-void choose_best_flags(size_t& best_flags, size_t& best_size, size_t flags, size_t size) {
+void ChooseBestFlags(size_t& best_flags, size_t& best_size, size_t flags, size_t size) {
     if (size < best_size) {
         best_size = size;
         best_flags = flags;
@@ -67,10 +67,10 @@ std::vector<char> EncodeStringVector(const std::vector<std::string>& input, size
 
         size_t best_size = EstimateRaw<std::string>(input);
         size_t best_flags = 0;
-        choose_best_flags(best_flags, best_size, kFlagRleStr, rle_without_bp);
-        choose_best_flags(best_flags, best_size, kFlagRleStr | kFlagBitPackStr, rle_with_bp);
-        choose_best_flags(best_flags, best_size, kFlagDictStr, dict_without_bp);
-        choose_best_flags(best_flags, best_size, kFlagDictStr | kFlagBitPackStr, dict_with_bp);
+        ChooseBestFlags(best_flags, best_size, kFlagRleStr, rle_without_bp);
+        ChooseBestFlags(best_flags, best_size, kFlagRleStr | kFlagBitPackStr, rle_with_bp);
+        ChooseBestFlags(best_flags, best_size, kFlagDictStr, dict_without_bp);
+        ChooseBestFlags(best_flags, best_size, kFlagDictStr | kFlagBitPackStr, dict_with_bp);
 
         flags = best_flags;
     }
@@ -141,32 +141,32 @@ std::vector<char> EncodeColumn(std::shared_ptr<Column> column, Type type, size_t
 
     switch (type) {
         case Type::Int16: {
-            const std::vector<int16_t>& column_data = dynamic_cast<const ColumnTyped<int16_t>&>(*column).GetData();
+            const std::vector<int16_t>& column_data = static_cast<const ColumnTyped<int16_t>&>(*column).GetData();
             encoded = EncodeIntegerVector<int16_t>(column_data, flags);
             break;
         }
         case Type::Int32: {
-            const std::vector<int32_t>& column_data = dynamic_cast<const ColumnTyped<int32_t>&>(*column).GetData();
+            const std::vector<int32_t>& column_data = static_cast<const ColumnTyped<int32_t>&>(*column).GetData();
             encoded = EncodeIntegerVector<int32_t>(column_data, flags);
             break;
         }
         case Type::Int64: {
-            const std::vector<int64_t>& column_data = dynamic_cast<const ColumnTyped<int64_t>&>(*column).GetData();
+            const std::vector<int64_t>& column_data = static_cast<const ColumnTyped<int64_t>&>(*column).GetData();
             encoded = EncodeIntegerVector<int64_t>(column_data, flags);
             break;
         }
         case Type::Float: {
-            const std::vector<float>& column_data = dynamic_cast<const ColumnTyped<float>&>(*column).GetData();
+            const std::vector<float>& column_data = static_cast<const ColumnTyped<float>&>(*column).GetData();
             encoded = EncodeFloatVector<float>(column_data, flags);
             break;
         }
         case Type::Double: {
-            const std::vector<double>& column_data = dynamic_cast<const ColumnTyped<double>&>(*column).GetData();
+            const std::vector<double>& column_data = static_cast<const ColumnTyped<double>&>(*column).GetData();
             encoded = EncodeFloatVector<double>(column_data, flags);
             break;
         }
         case Type::Date: {
-            const std::vector<Date>& column_data = dynamic_cast<const ColumnTyped<Date>&>(*column).GetData();
+            const std::vector<Date>& column_data = static_cast<const ColumnTyped<Date>&>(*column).GetData();
             std::vector<int32_t> raw(rows_number);
             for (size_t i = 0; i < rows_number; i++) {
                 raw[i] = column_data[i].GetValue();
@@ -175,7 +175,7 @@ std::vector<char> EncodeColumn(std::shared_ptr<Column> column, Type type, size_t
             break;
         }
         case Type::Timestamp: {
-            const std::vector<Timestamp>& column_data = dynamic_cast<const ColumnTyped<Timestamp>&>(*column).GetData();
+            const std::vector<Timestamp>& column_data = static_cast<const ColumnTyped<Timestamp>&>(*column).GetData();
             std::vector<int64_t> raw(rows_number);
             for (size_t i = 0; i < rows_number; i++) {
                 raw[i] = column_data[i].GetValue();
@@ -184,12 +184,12 @@ std::vector<char> EncodeColumn(std::shared_ptr<Column> column, Type type, size_t
             break;
         }
         case Type::Char: {
-            const std::vector<char>& column_data = dynamic_cast<const ColumnTyped<char>&>(*column).GetData();
+            const std::vector<char>& column_data = static_cast<const ColumnTyped<char>&>(*column).GetData();
             encoded = EncodeIntegerVector<char>(column_data, flags);
             break;
         }
         case Type::String: {
-            const std::vector<std::string>& column_data = dynamic_cast<const ColumnTyped<std::string>&>(*column).GetData();
+            const std::vector<std::string>& column_data = static_cast<const ColumnTyped<std::string>&>(*column).GetData();
             encoded = EncodeStringVector(column_data, flags);
             break;
         }

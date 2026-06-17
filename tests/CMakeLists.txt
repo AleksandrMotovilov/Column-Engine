@@ -13,3 +13,7 @@ target_include_directories(test_aggregation_functions PUBLIC ${CMAKE_SOURCE_DIR}
 add_executable(test_expressions test_expressions.cpp)
 target_link_libraries(test_expressions execution GTest::gtest_main)
 target_include_directories(test_expressions PUBLIC ${CMAKE_SOURCE_DIR})
+
+add_executable(test_compression test_compression.cpp)
+target_link_libraries(test_compression encoding objects GTest::gtest_main)
+target_include_directories(test_compression PUBLIC ${CMAKE_SOURCE_DIR})
