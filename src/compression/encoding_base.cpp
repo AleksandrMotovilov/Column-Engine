@@ -1,4 +1,4 @@
-#include "src/kernel/encoding_base.h"
+#include "src/compression/encoding_base.h"
 
 template<>
 size_t ElementValueSize<std::string>(const std::string& value) {

@@ -16,4 +16,5 @@ private:
     std::shared_ptr<Operator> next_;
     std::shared_ptr<Expression> expr_;
     std::string column_name_;
+    std::shared_ptr<Schema> schema_;
 };

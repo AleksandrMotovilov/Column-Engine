@@ -2,11 +2,12 @@
 
 #include <fstream>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 #include <cstdint>
 #include "src/kernel/batch.h"
-#include "src/kernel/encoding.h"
+#include "src/compression/encoding.h"
 
 std::shared_ptr<Column> ReadColumnFromClmn(std::ifstream& fin, Type type, size_t rows_number, size_t flags);
 
@@ -14,16 +15,17 @@ void WriteColumnToClmn(std::ofstream& fout, std::shared_ptr<Column> column, Type
 
 class ReaderClmn {
 public:
-    explicit ReaderClmn(const std::string& file_clmn);
+    explicit ReaderClmn(const std::string& file_clmn, std::optional<std::vector<std::string>> columns_names);
     ~ReaderClmn();
     void ReadSchema();
     std::shared_ptr<Schema> GetSchema() const;
     std::shared_ptr<Batch> ReadBatch();
-    std::shared_ptr<Batch> ReadBatchColumns(const std::vector<std::string>& columns_names);
 
 private:
     std::ifstream fin_;
     std::shared_ptr<Schema> schema_;
+    std::optional<std::vector<std::string>> requested_columns_;
+    std::vector<size_t> selected_indices_;
     size_t rows_number_;
     size_t columns_number_;
     size_t batches_number_;

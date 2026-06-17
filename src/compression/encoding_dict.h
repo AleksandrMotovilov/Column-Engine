@@ -4,8 +4,8 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include "src/kernel/encoding_base.h"
-#include "src/kernel/encoding_bitpack.h"
+#include "src/compression/encoding_base.h"
+#include "src/compression/encoding_bitpack.h"
 
 template<typename T>
 std::vector<char> EncodeDict(const std::vector<T>& input, bool use_bitpack) {

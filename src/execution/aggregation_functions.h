@@ -15,6 +15,7 @@ public:
     virtual void AppendResultBytes(std::vector<char>& buf) const = 0;
     virtual Type GetType() const = 0;
     virtual std::string GetName() const = 0;
+    virtual std::string GetNeededColumnName() const = 0;
 };
 
 class CountRowsAggregation : public AggregationFunction {
@@ -23,6 +24,7 @@ public:
     void AppendResultBytes(std::vector<char>& buf) const override;
     Type GetType() const override;
     std::string GetName() const override;
+    std::string GetNeededColumnName() const override;
 
 private:
     int64_t count_ = 0;
@@ -60,6 +62,10 @@ public:
         return "count(distinct " + column_name_ + ")";
     }
 
+    std::string GetNeededColumnName() const override {
+        return column_name_;
+    }
+
 private:
     std::string column_name_;
     std::unordered_set<T> values_;
@@ -73,6 +79,7 @@ public:
     void AppendResultBytes(std::vector<char>& buf) const override;
     Type GetType() const override;
     std::string GetName() const override;
+    std::string GetNeededColumnName() const override;
 
 private:
     std::string column_name_;
@@ -87,6 +94,7 @@ public:
     void AppendResultBytes(std::vector<char>& buf) const override;
     Type GetType() const override;
     std::string GetName() const override;
+    std::string GetNeededColumnName() const override;
 
 private:
     std::string column_name_;
@@ -100,6 +108,7 @@ public:
     void AppendResultBytes(std::vector<char>& buf) const override;
     Type GetType() const override;
     std::string GetName() const override;
+    std::string GetNeededColumnName() const override;
 
 private:
     std::string column_name_;
@@ -113,6 +122,7 @@ public:
     void AppendResultBytes(std::vector<char>& buf) const override;
     Type GetType() const override;
     std::string GetName() const override;
+    std::string GetNeededColumnName() const override;
 
 private:
     std::string column_name_;
@@ -126,6 +136,7 @@ public:
     void AppendResultBytes(std::vector<char>& buf) const override;
     Type GetType() const override;
     std::string GetName() const override;
+    std::string GetNeededColumnName() const override;
 
 private:
     std::string column_name_;
@@ -140,6 +151,7 @@ public:
     void AppendResultBytes(std::vector<char>& buf) const override;
     Type GetType() const override;
     std::string GetName() const override;
+    std::string GetNeededColumnName() const override;
 
 private:
     std::string column_name_;
@@ -189,6 +201,10 @@ public:
         return "min(" + column_name_ + ")";
     }
 
+    std::string GetNeededColumnName() const override {
+        return column_name_;
+    }
+
 private:
     std::string column_name_;
     std::optional<T> min_value_;
@@ -213,6 +229,7 @@ public:
     void AppendResultBytes(std::vector<char>& buf) const override;
     Type GetType() const override;
     std::string GetName() const override;
+    std::string GetNeededColumnName() const override;
 
 private:
     std::string column_name_;
@@ -261,6 +278,10 @@ public:
         return "max(" + column_name_ + ")";
     }
 
+    std::string GetNeededColumnName() const override {
+        return column_name_;
+    }
+
 private:
     std::string column_name_;
     std::optional<T> max_value_;
@@ -285,6 +306,7 @@ public:
     void AppendResultBytes(std::vector<char>& buf) const override;
     Type GetType() const override;
     std::string GetName() const override;
+    std::string GetNeededColumnName() const override;
 
 private:
     std::string column_name_;

@@ -3,7 +3,7 @@
 #include <cstring>
 #include <type_traits>
 #include <vector>
-#include "src/kernel/encoding_bitpack.h"
+#include "src/compression/encoding_bitpack.h"
 
 template<typename T>
 void DoDelta(std::vector<T>& input) {

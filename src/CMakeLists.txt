@@ -8,10 +8,10 @@ add_library(objects
 target_include_directories(objects PUBLIC ${CMAKE_SOURCE_DIR})
 
 add_library(encoding
-    kernel/encoding.cpp
-    kernel/encoding_bitpack.cpp
-    kernel/encoding_lz4.cpp
-    kernel/encoding_base.cpp
+    compression/encoding.cpp
+    compression/encoding_bitpack.cpp
+    compression/encoding_lz4.cpp
+    compression/encoding_base.cpp
 )
 target_include_directories(encoding PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(encoding PUBLIC objects)

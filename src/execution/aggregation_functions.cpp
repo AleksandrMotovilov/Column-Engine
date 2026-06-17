@@ -17,6 +17,10 @@ std::string CountRowsAggregation::GetName() const {
     return "count(*)";
 }
 
+std::string CountRowsAggregation::GetNeededColumnName() const {
+    return "";
+}
+
 CountDistinctAggregationTyped<Date>::CountDistinctAggregationTyped(std::string column_name) {
     column_name_ = std::move(column_name);
 }
@@ -46,6 +50,10 @@ std::string CountDistinctAggregationTyped<Date>::GetName() const {
     return "count(distinct " + column_name_ + ")";
 }
 
+std::string CountDistinctAggregationTyped<Date>::GetNeededColumnName() const {
+    return column_name_;
+}
+
 CountDistinctAggregationTyped<Timestamp>::CountDistinctAggregationTyped(std::string column_name) {
     column_name_ = std::move(column_name);
 }
@@ -73,6 +81,10 @@ Type CountDistinctAggregationTyped<Timestamp>::GetType() const {
 
 std::string CountDistinctAggregationTyped<Timestamp>::GetName() const {
     return "count(distinct " + column_name_ + ")";
+}
+
+std::string CountDistinctAggregationTyped<Timestamp>::GetNeededColumnName() const {
+    return column_name_;
 }
 
 CountDistinctAggregation::CountDistinctAggregation(std::string column_name) {
@@ -138,6 +150,10 @@ std::string CountDistinctAggregation::GetName() const {
     return "count(distinct " + column_name_ + ")";
 }
 
+std::string CountDistinctAggregation::GetNeededColumnName() const {
+    return column_name_;
+}
+
 SumAggregation::SumAggregation(std::string column_name) {
     column_name_ = std::move(column_name);
 }
@@ -162,6 +178,10 @@ Type SumAggregation::GetType() const {
 
 std::string SumAggregation::GetName() const {
     return "sum(" + column_name_ + ")";
+}
+
+std::string SumAggregation::GetNeededColumnName() const {
+    return column_name_;
 }
 
 SumWithOffsetAggregation::SumWithOffsetAggregation(std::string column_name, int64_t offset) {
@@ -193,6 +213,10 @@ std::string SumWithOffsetAggregation::GetName() const {
     return "sum(" + column_name_ + "+" + std::to_string(offset_) + ")";
 }
 
+std::string SumWithOffsetAggregation::GetNeededColumnName() const {
+    return column_name_;
+}
+
 AvgAggregation::AvgAggregation(std::string column_name) {
     column_name_ = std::move(column_name);
 }
@@ -221,6 +245,10 @@ Type AvgAggregation::GetType() const {
 
 std::string AvgAggregation::GetName() const {
     return "avg(" + column_name_ + ")";
+}
+
+std::string AvgAggregation::GetNeededColumnName() const {
+    return column_name_;
 }
 
 template<>
@@ -341,6 +369,10 @@ std::string MinAggregation::GetName() const {
     return "min(" + column_name_ + ")";
 }
 
+std::string MinAggregation::GetNeededColumnName() const {
+    return column_name_;
+}
+
 template<>
 void MaxAggregationTyped<std::string>::Update(std::shared_ptr<Batch> batch) {
     size_t index = batch->FindColumn(column_name_);
@@ -457,4 +489,8 @@ Type MaxAggregation::GetType() const {
 
 std::string MaxAggregation::GetName() const {
     return "max(" + column_name_ + ")";
+}
+
+std::string MaxAggregation::GetNeededColumnName() const {
+    return column_name_;
 }

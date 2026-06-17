@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <functional>
 #include <unordered_map>
+#include <unordered_set>
 #include <memory>
 #include <vector>
 #include "src/execution/aggregation_functions.h"

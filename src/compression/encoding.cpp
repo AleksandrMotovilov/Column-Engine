@@ -1,4 +1,4 @@
-#include "src/kernel/encoding.h"
+#include "src/compression/encoding.h"
 
 size_t GetCompressionFlags() {
     size_t flags = 0;

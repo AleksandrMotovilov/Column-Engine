@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 #include "src/execution/operators.h"
@@ -8,11 +9,9 @@
 
 class ScanOperator : public Operator {
 public:
-    ScanOperator(const std::string& file_clmn, std::vector<std::string> needed_columns, bool full_matrix = false);
+    ScanOperator(const std::string& file_clmn, std::optional<std::vector<std::string>> columns_names);
     std::shared_ptr<Batch> Next() override;
 
 private:
-    std::vector<std::string> needed_columns_;
     std::unique_ptr<ReaderClmn> reader_;
-    bool full_matrix_;
 };
