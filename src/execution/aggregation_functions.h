@@ -1,12 +1,13 @@
 #pragma once
 
-#include <cstring>
 #include <memory>
 #include <optional>
 #include <string>
 #include <unordered_set>
 #include "src/kernel/batch.h"
 #include "src/kernel/column.h"
+
+__int128 ComputeColumnSum(std::shared_ptr<Column> column, Type type);
 
 class AggregationFunction {
 public:
@@ -171,16 +172,11 @@ public:
         if (index == batch->GetColumnsNumber()) {
             throw std::runtime_error("Column not found: " + column_name_ + " :: MinAggregation");
         }
-        std::shared_ptr<Column> column = batch->GetColumn(index);
-        if (column->GetSize() == 0) {
-            return;
-        }
-        std::vector<char> buf;
-        column->AppendMinBytes(buf);
-        T batch_min;
-        std::memcpy(&batch_min, buf.data(), sizeof(T));
-        if (!min_value_.has_value() || batch_min < *min_value_) {
-            min_value_ = batch_min;
+        const std::vector<T>& data = dynamic_cast<const ColumnTyped<T>&>(*batch->GetColumn(index)).GetData();
+        for (const T& value : data) {
+            if (!min_value_.has_value() || value < *min_value_) {
+                min_value_ = value;
+            }
         }
     }
 
@@ -209,9 +205,6 @@ private:
     std::string column_name_;
     std::optional<T> min_value_;
 };
-
-template<>
-void MinAggregationTyped<std::string>::Update(std::shared_ptr<Batch> batch);
 
 template<>
 void MinAggregationTyped<std::string>::AppendResultBytes(std::vector<char>& buf) const;
@@ -248,16 +241,11 @@ public:
         if (index == batch->GetColumnsNumber()) {
             throw std::runtime_error("Column not found: " + column_name_ + " :: MaxAggregation");
         }
-        std::shared_ptr<Column> column = batch->GetColumn(index);
-        if (column->GetSize() == 0) {
-            return;
-        }
-        std::vector<char> buf;
-        column->AppendMaxBytes(buf);
-        T batch_max;
-        std::memcpy(&batch_max, buf.data(), sizeof(T));
-        if (!max_value_.has_value() || batch_max > *max_value_) {
-            max_value_ = batch_max;
+        const std::vector<T>& data = dynamic_cast<const ColumnTyped<T>&>(*batch->GetColumn(index)).GetData();
+        for (const T& value : data) {
+            if (!max_value_.has_value() || value > *max_value_) {
+                max_value_ = value;
+            }
         }
     }
 
@@ -286,9 +274,6 @@ private:
     std::string column_name_;
     std::optional<T> max_value_;
 };
-
-template<>
-void MaxAggregationTyped<std::string>::Update(std::shared_ptr<Batch> batch);
 
 template<>
 void MaxAggregationTyped<Date>::AppendResultBytes(std::vector<char>& buf) const;

@@ -1,6 +1,5 @@
 add_library(objects
     kernel/types.cpp
-    kernel/column.cpp
     kernel/column_utils.cpp
     kernel/schema.cpp
     kernel/batch.cpp
