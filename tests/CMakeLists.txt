@@ -1,0 +1,19 @@
+add_executable(test_convertion test_convertion.cpp)
+target_link_libraries(test_convertion converter_from_csv_to_clmn converter_from_clmn_to_csv GTest::gtest_main)
+target_include_directories(test_convertion PUBLIC ${CMAKE_SOURCE_DIR})
+
+add_executable(test_queries test_queries.cpp)
+target_link_libraries(test_queries converter_from_csv_to_clmn converter_from_clmn_to_csv execution GTest::gtest_main)
+target_include_directories(test_queries PUBLIC ${CMAKE_SOURCE_DIR})
+
+add_executable(test_aggregation_functions test_aggregation_functions.cpp)
+target_link_libraries(test_aggregation_functions execution GTest::gtest_main)
+target_include_directories(test_aggregation_functions PUBLIC ${CMAKE_SOURCE_DIR})
+
+add_executable(test_expressions test_expressions.cpp)
+target_link_libraries(test_expressions execution GTest::gtest_main)
+target_include_directories(test_expressions PUBLIC ${CMAKE_SOURCE_DIR})
+
+add_executable(test_compression test_compression.cpp)
+target_link_libraries(test_compression encoding objects GTest::gtest_main)
+target_include_directories(test_compression PUBLIC ${CMAKE_SOURCE_DIR})
