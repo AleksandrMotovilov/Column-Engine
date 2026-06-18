@@ -22,11 +22,7 @@ bool CompareFiles(const std::string& file_left, const std::string& file_right) {
     return ans;
 }
 
-void TestConvertion(
-    const std::string& test_dir,
-    const std::string& text_data,
-    const std::string& text_schema
-) {
+void TestConvertion(const std::string& test_dir, const std::string& text_data, const std::string& text_schema) {
     std::filesystem::create_directories(test_dir);
 
     std::string file1 = test_dir + "/data.csv";

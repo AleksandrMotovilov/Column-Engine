@@ -1,0 +1,36 @@
+name: Build and test
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: install dependencies
+      run: sudo apt-get install -y liblz4-dev libre2-dev libboost-dev libabsl-dev
+
+    - name: cmake
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+
+    - name: make
+      run: |
+        cd build
+        make
+
+    - name: test
+      run: |
+        cd build
+        ./tests/test_convertion
+        ./tests/test_queries
+        ./tests/test_aggregation_functions
+        ./tests/test_expressions
+        ./tests/test_compression

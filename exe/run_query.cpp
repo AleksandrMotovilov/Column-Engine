@@ -482,7 +482,7 @@ static void RunQuery(int query_num, const std::string& input_clmn, const std::st
                     std::make_shared<FilterOperator>(
                         std::make_shared<ScanOperator>(
                             input_clmn,
-                            std::vector<std::string>{}, true
+                            std::nullopt
                         ),
                         std::make_shared<ContainsExpression>("URL", "google")
                     ),
